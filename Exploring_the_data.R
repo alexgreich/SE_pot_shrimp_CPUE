@@ -43,14 +43,14 @@ unique(focus_years_ernest$Season.Ref)
 unique(focus_years_ernest$Gear.Code) #just 91, indicating pots. Good
 
 unique(focus_years_ernest$Species.Code) #there's multiple here. We just want spot shrimp (965)
-focus_years_ernest <- focus_years_ernest %>% filter(Species.Code == 965)
+#focus_years_ernest <- focus_years_ernest %>% filter(Species.Code == 965) NOT YET OR ELSE POTS MIGHT SAY 0!!
 unique(focus_years_ernest$Species.Name) #good, it's just spot shrimp now
 
 
 ###select just the columns that I am interested in for this analysis
 focus_years_ernest <- focus_years_ernest %>% select(Batch.Year, Pre.Print.Ticket, Fish.Ticket.Number, ADFG.Number, Vessel.Name, Event.Date, DOL.Month, Stat.Week, Date.of.Landing, Season, Season.Ref,
                                                     Item.Number, 
-                                                    Stat.Area, Whole.Weight..sum., Pots) #what is item number? the item per fish ticket
+                                                    Stat.Area, Whole.Weight..sum., Pots, Species.Code) #what is item number? the item per fish ticket
 
 ###wrangle so that I have a new column called Number_of_vessels, which will represent the number of vessels in a current season
 focus_years_ernest <- focus_years_ernest %>% 
@@ -61,16 +61,40 @@ focus_years_ernest <- focus_years_ernest %>%
 
 ###wrangle: sum the weight(sum) per each fish ticket, while keeping the MAX of pots for that fish ticket. This will insure that pots are not counted twice/multiple times
 #there are some NA's but I dont want to deal with them
+
 sum_shrimp_ernest <- focus_years_ernest %>%
-  group_by(Fish.Ticket.Number, Season.Ref, ADFG.Number, Vessel.Name, DOL.Month, Stat.Week) %>%
+  mutate(Pots = replace_na(Pots, 0)) %>%
+  group_by(Fish.Ticket.Number, Species.Code) %>% #also group by stat area for analysis areas with multiple stat areas.
   summarise(
     total_weight = sum(Whole.Weight..sum.),
-    max_pots = max(Pots)) %>%
+    max_pots = max(Pots),
+    ADFG.Number = max(ADFG.Number),
+    Season.Ref=max(Season.Ref),
+    Vessel.Name = max(Vessel.Name),
+    DOL.Month= max(DOL.Month),
+    Stat.Week=max(Stat.Week)
+    ) %>%
+  ungroup() #this has pots and total weight for all shrimp species
+
+max_pots_total <- sum_shrimp_ernest %>% #get # pots fpr each fish ticket
+  group_by(Fish.Ticket.Number) %>%
+  summarise(
+    max_pots_2 = max(max_pots)
+  )%>%
   ungroup()
 
+sum_spot_shrimp_ernest <- sum_shrimp_ernest %>%
+  filter(Species.Code == 965) %>%
+  right_join(max_pots_total) %>%
+  select(-max_pots)
+
+View(sum_spot_shrimp_ernest)
 str(sum_shrimp_ernest)
 str(focus_years_ernest)
 
+#there are A LOT OF ZEROS for pot (effort) in the early data. I'm concerned that fishermen reported one pot (Effort) for multiple fish ticksts
+##I asked max about this, if this is confirmed we'll have to fgure out a way around the issue
+ 
 
 ###############################
 #Exploratory data analysis
