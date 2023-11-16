@@ -5,7 +5,7 @@
 
 #argh why is github not connecting?
 
-#intially, I'm looking at Fish Ticket and/or Logbook data just from Ernest Sound
+#intially, I'm looking at Fish Ticket and/or Logbook data just from Ernest Sound 
 fish_tickets_ernest <- read.csv("Data/Ernest_sound_fish_tickets.csv")
 
 
