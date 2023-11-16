@@ -48,17 +48,28 @@ unique(focus_years_ernest$Species.Name) #good, it's just spot shrimp now
 
 
 ###select just the columns that I am interested in for this analysis
-focus_years_ernest <- focus_years_ernest %>% select(Batch.Year, Pre.Print.Ticket, ADFG.Number, Vessel.Name, Event.Date, DOL.Month, Stat.Week, Date.of.Landing, Season, Season.Ref,
+focus_years_ernest <- focus_years_ernest %>% select(Batch.Year, Pre.Print.Ticket, Fish.Ticket.Number, ADFG.Number, Vessel.Name, Event.Date, DOL.Month, Stat.Week, Date.of.Landing, Season, Season.Ref,
                                                     Item.Number, 
                                                     Stat.Area, Whole.Weight..sum., Pots) #what is item number? the item per fish ticket
 
 ###wrangle so that I have a new column called Number_of_vessels, which will represent the number of vessels in a current season
-##this will take some dplyr acrobatics
+focus_years_ernest <- focus_years_ernest %>% 
+  group_by(Season.Ref) %>% #grouping by season (year)
+  mutate(vessel_count = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number)
+  ungroup() #ungroup
 
 
 ###wrangle: sum the weight(sum) per each fish ticket, while keeping the MAX of pots for that fish ticket. This will insure that pots are not counted twice/multiple times
+#there are some NA's but I dont want to deal with them
+sum_shrimp_ernest <- focus_years_ernest %>%
+  group_by(Fish.Ticket.Number, Season.Ref, ADFG.Number, Vessel.Name, DOL.Month, Stat.Week) %>%
+  summarise(
+    total_weight = sum(Whole.Weight..sum.),
+    max_pots = max(Pots)) %>%
+  ungroup()
 
-
+str(sum_shrimp_ernest)
+str(focus_years_ernest)
 
 
 ###############################
