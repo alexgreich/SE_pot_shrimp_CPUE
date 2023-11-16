@@ -92,13 +92,18 @@ View(sum_spot_shrimp_ernest)
 str(sum_shrimp_ernest)
 str(focus_years_ernest)
 
-#there are A LOT OF ZEROS for pot (effort) in the early data. I'm concerned that fishermen reported one pot (Effort) for multiple fish ticksts
-##I asked max about this, if this is confirmed we'll have to fgure out a way around the issue
- 
 
+#calculate nominal CPUE
+sum_spot_shrimp_ernest <- sum_spot_shrimp_ernest %>%
+  filter(max_pots_2 != 0) %>%
+  mutate(CPUE_nom = total_weight/max_pots_2)
+
+##QC: is it possible that there are one pot #entry for multiple stat areas? If so, more data wrangling required (to make sure there is not a 0 where there should not be a 0)
+ 
 ###############################
 #Exploratory data analysis
 #############################
+
 
 
 
