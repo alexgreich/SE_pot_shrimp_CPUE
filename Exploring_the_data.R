@@ -12,6 +12,8 @@ library(ggplot2)
 library(cowplot)
 library(RColorBrewer)
 library(viridis)
+library(ggcorrplot)
+library(corrplot)
 
 
 #intially, I'm looking at Fish Ticket and/or Logbook data just from Ernest Sound 
@@ -98,18 +100,44 @@ sum_spot_shrimp_ernest <- sum_spot_shrimp_ernest %>%
   filter(max_pots_2 != 0) %>%
   mutate(CPUE_nom = total_weight/max_pots_2)
 
-##QC: is it possible that there are one pot #entry for multiple stat areas? If so, more data wrangling required (to make sure there is not a 0 where there should not be a 0)
+##QC: is it possible that there are one pot # entry for multiple stat areas? If so, more data wrangling required (to make sure there is not a 0 where there should not be a 0)
  
 ###############################
 #Exploratory data analysis
 #############################
 
 
+##correlation plot
 
+#try ggcorplot
+#which 
+names(sum_spot_shrimp_ernest)
 
+corr_spot <- sum_spot_shrimp_ernest %>%
+  select(ADFG.Number, Season.Ref, DOL.Month, Stat.Week, CPUE_nom) %>%
+  mutate(ADFG.Number = factor(ADFG.Number), Season.Ref = as.factor(Season.Ref)) #dol month and stat week should be temporal.
 
+#corr <- round(cor(corr_spot), 1)
+#NOPE
 
-##WIP below##
+#try corrplot
+#M <- cor()
+
+#try internet code
+model.matrix(~0+., data=corr_spot) %>% 
+  cor(use="pairwise.complete.obs") %>% 
+  ggcorrplot(show.diag=FALSE, type="lower", lab=TRUE, lab_size=2)
+
+corr_spot2 <- sum_spot_shrimp_ernest %>%
+  select(DOL.Month, Stat.Week, CPUE_nom)
+
+model.matrix(~0+., data=corr_spot2) %>% 
+  cor(use="pairwise.complete.obs") %>% 
+  ggcorrplot(show.diag=FALSE, type="lower", lab=TRUE, lab_size=2)
+
+#ok, when we revisit this next, do exploratory data analysis comprehensively on this sort of data. Think: correlation plots. Should I make stat weeks integers? Probably not...
+
+##WIP below##4
 
 
 #############################################################3
