@@ -162,14 +162,46 @@ pairs(corr_spot2)
 ###CONCLUSION: VESSEL (ADFG.Number) and YEAR (Season.Ref) have ties to nominal cpue
 
 
-ggplot(na.omit(corr_spot)) + aes(x=ADFG.Number, y=(CPUE_nom)) + geom_smooth(method="lm") + geom_point()
-ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_smooth(method="lm") + geom_point() #maybe geom_smooth does not work with caregorical variables
+ggplot(na.omit(corr_spot)) + aes(x=ADFG.Number, y=(CPUE_nom)) +  geom_boxplot()
+ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_point() #maybe geom_smooth does not work with caregorical variables
 ggplot(na.omit(corr_spot)) + aes(x=Batch.Year, y=(CPUE_nom)) + geom_smooth(method="lm") + geom_point()
 #ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_smooth(method="gam") + geom_point()
 #linearly, the CPUE increases with year. But it's more cyclical than linear
+ggplot(na.omit(corr_spot)) + aes(x=factor(Batch.Year), y=(CPUE_nom)) + geom_boxplot() 
+ggplot(na.omit(corr_spot)) + aes(x=factor(Batch.Year), y=(CPUE_nom)) + geom_violin() 
+
+#look closer at the other variables in the pairs() plot:
+ggplot(na.omit(corr_spot)) + aes(x=factor(DOL.Month), y=(CPUE_nom)) + geom_boxplot()
+ggplot(na.omit(corr_spot)) + aes(x=DOL.Month, y=(CPUE_nom)) + geom_point()
+
+ggplot(na.omit(corr_spot)) + aes(x=factor(Stat.Week), y=(CPUE_nom)) + geom_boxplot()
 
 
 #what's next: either more exploratory plots or analysis
+
+#density of cpie data
+ggplot(corr_spot) + aes(x=CPUE_nom) +geom_density()
+##righted-tailed but passable as normal?
+
+
+
+
+###########333
+#ANALYSIS
+############
+#phil's null model:
+#m0 <- bam(log_ppm ~ Year, data=fulldat, gamma=1.4)
+##Year is in the null model. Interesting.
+##referencing around line 523 of Jig_BFG_CPUE.R code
+###WHAT IS log_ppm?? -> it's the log of the set pounds per minute
+
+#after the null model, phil looks at the null model plus smoothers
+##like this:
+#m0.jday <- bam(log_ppm ~ Year + s(Jdate, k=4), data=fulldat, gamma=1.4)
+#m0.drifts <- bam(log_ppm ~ Year + s(Drifts, k=4), data=fulldat, gamma=1.4)
+#m0.depth <- bam(log_ppm ~ Year + s(Depth, k=4), data=fulldat, gamma=1.4)
+#m0.boat <- bam(log_ppm ~ Year + s(ADFG, bs='re', by=dum), data=fulldat, gamma=1.4) #this variable is not continuous, right? He does something so it works...
+
 
 
 ##WIP below##4
