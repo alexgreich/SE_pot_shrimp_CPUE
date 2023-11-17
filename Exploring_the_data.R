@@ -1,9 +1,18 @@
 ##exploring the data##
 #Alex Reich
 #initiated: 11/14/23
-#last worked on: 11/16/23
+#last worked on: 11/17/23
 
 #github repository is functional for this project as of 11/16/23
+#COMMENT: 11/17/23: I am (still) concerned that there are zeros where there should not be zeros for the Pots column
+##potentially caused by filtering the stat area BEFORE the CPUE data-wrangling.
+##There's a chance that a fisherman reported catch from multiple stat areas on one fish ticket.
+###seems to be a small number of instances of this, if any
+##BUT, I can check by importing the ENTIRE DATASET (maybe filter from season 01-02 onwards), wrangling the CPUE and pot related stuff, and THEN filtering for stat/analysis area
+###I will have to have Oracle Client up and running and functional first, and not deal with OceanAK's bullshit csv line limit.
+######-> Oracle client is in progress. Ticket is with OIT. Is is downloaded but not appearing where it needs to be in R
+
+#also - 11/17/23 - read other GAM-CPUE studies and make sure I'm setting up a model correctly. But first - > DATA EXPLORATION!
 
 
 #load libraries
