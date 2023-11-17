@@ -55,13 +55,12 @@ unique(focus_years_ernest$Gear.Code) #just 91, indicating pots. Good
 
 unique(focus_years_ernest$Species.Code) #there's multiple here. We just want spot shrimp (965)
 #focus_years_ernest <- focus_years_ernest %>% filter(Species.Code == 965) NOT YET OR ELSE POTS MIGHT SAY 0!!
-unique(focus_years_ernest$Species.Name) #good, it's just spot shrimp now
 
 
 ###select just the columns that I am interested in for this analysis
 focus_years_ernest <- focus_years_ernest %>% select(Batch.Year, Pre.Print.Ticket, Fish.Ticket.Number, ADFG.Number, Vessel.Name, Event.Date, DOL.Month, Stat.Week, Date.of.Landing, Season, Season.Ref,
                                                     Item.Number, 
-                                                    Stat.Area, Whole.Weight..sum., Pots, Species.Code) #what is item number? the item per fish ticket
+                                                    Stat.Area, Whole.Weight..sum., Pots, Species.Code, Batch.Year) #what is item number? the item per fish ticket
 
 ###wrangle so that I have a new column called Number_of_vessels, which will represent the number of vessels in a current season
 focus_years_ernest <- focus_years_ernest %>% 
@@ -83,7 +82,8 @@ sum_shrimp_ernest <- focus_years_ernest %>%
     Season.Ref=max(Season.Ref),
     Vessel.Name = max(Vessel.Name),
     DOL.Month= max(DOL.Month),
-    Stat.Week=max(Stat.Week)
+    Stat.Week=max(Stat.Week), 
+    Batch.Year=max(Batch.Year)
     ) %>%
   ungroup() #this has pots and total weight for all shrimp species
 
@@ -123,7 +123,7 @@ sum_spot_shrimp_ernest <- sum_spot_shrimp_ernest %>%
 names(sum_spot_shrimp_ernest)
 
 corr_spot <- sum_spot_shrimp_ernest %>%
-  select(ADFG.Number, Season.Ref, DOL.Month, Stat.Week, CPUE_nom) %>%
+  select(ADFG.Number, Season.Ref, DOL.Month, Stat.Week, CPUE_nom, Batch.Year) %>%
   mutate(ADFG.Number = factor(ADFG.Number), Season.Ref = as.factor(Season.Ref)) #dol month and stat week should be temporal.
 
 #corr <- round(cor(corr_spot), 1)
@@ -133,18 +133,44 @@ corr_spot <- sum_spot_shrimp_ernest %>%
 #M <- cor()
 
 #try internet code
-model.matrix(~0+., data=corr_spot) %>% 
-  cor(use="pairwise.complete.obs") %>% 
-  ggcorrplot(show.diag=FALSE, type="lower", lab=TRUE, lab_size=2)
+#model.matrix(~0+., data=corr_spot) %>% 
+ # cor(use="pairwise.complete.obs") %>% 
+  #ggcorrplot(show.diag=FALSE, type="lower", lab=TRUE, lab_size=2)
 
 corr_spot2 <- sum_spot_shrimp_ernest %>%
-  select(DOL.Month, Stat.Week, CPUE_nom)
+  select(DOL.Month, Stat.Week, CPUE_nom, Batch.Year)
 
-model.matrix(~0+., data=corr_spot2) %>% 
-  cor(use="pairwise.complete.obs") %>% 
-  ggcorrplot(show.diag=FALSE, type="lower", lab=TRUE, lab_size=2)
+#model.matrix(~0+., data=corr_spot2) %>% 
+ # cor(use="pairwise.complete.obs") %>% 
+#  ggcorrplot(show.diag=FALSE, type="lower", lab=TRUE, lab_size=2)
 
 #ok, when we revisit this next, do exploratory data analysis comprehensively on this sort of data. Think: correlation plots. Should I make stat weeks integers? Probably not...
+
+
+#11/17/23 messing with correlation matrix
+
+#accomplished what I was trying to do below
+#pairs(sum_spot_shrimp_ernest) #non-numeric arg makes it fail
+pairs(corr_spot) #this one is more useful
+pairs(corr_spot2)
+
+#so, these graphs imply:
+### Vessel (ADFG.Number) influences CPUE
+### Year (Batch.Year or Season.Ref, equivalently) have a relationship with CPUE
+##I dont really see a trend by month (DOL.Month), but we'll invlude it in the model
+##Idk about week. Looks more variable some weeks than others, likely beause there is higher effort in some weeks than others
+###CONCLUSION: VESSEL (ADFG.Number) and YEAR (Season.Ref) have ties to nominal cpue
+
+
+ggplot(na.omit(corr_spot)) + aes(x=ADFG.Number, y=(CPUE_nom)) + geom_smooth(method="lm") + geom_point()
+ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_smooth(method="lm") + geom_point() #maybe geom_smooth does not work with caregorical variables
+ggplot(na.omit(corr_spot)) + aes(x=Batch.Year, y=(CPUE_nom)) + geom_smooth(method="lm") + geom_point()
+#ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_smooth(method="gam") + geom_point()
+#linearly, the CPUE increases with year. But it's more cyclical than linear
+
+
+#what's next: either more exploratory plots or analysis
+
 
 ##WIP below##4
 
