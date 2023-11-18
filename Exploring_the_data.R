@@ -195,13 +195,42 @@ ggplot(corr_spot) + aes(x=CPUE_nom) +geom_density()
 ##referencing around line 523 of Jig_BFG_CPUE.R code
 ###WHAT IS log_ppm?? -> it's the log of the set pounds per minute
 
-#after the null model, phil looks at the null model plus smoothers
+#after the null model, phil looks at the null model plus smoothers - 
+##TESTED ALL OF THESE ONE STEP MODELS AGAINST EACH OTHER
 ##like this:
 #m0.jday <- bam(log_ppm ~ Year + s(Jdate, k=4), data=fulldat, gamma=1.4)
 #m0.drifts <- bam(log_ppm ~ Year + s(Drifts, k=4), data=fulldat, gamma=1.4)
 #m0.depth <- bam(log_ppm ~ Year + s(Depth, k=4), data=fulldat, gamma=1.4)
 #m0.boat <- bam(log_ppm ~ Year + s(ADFG, bs='re', by=dum), data=fulldat, gamma=1.4) #this variable is not continuous, right? He does something so it works...
 
+
+#AND THEN HE LOOKED AT THE GLOBAL MODEL
+##which for phil, was:
+#global<-bam(log_ppm ~ Year + Gear + s(Hooks, k=4) + 
+ #             s(Line_no, k=3) + s(Jdate, k=4) +
+  #            s(Drifts, k=4) + s(Depth, k=4) + te(Lon, Lat) +
+   #           s(Stat, bs='re', by=dumstat) + s(ADFG, bs='re', by=dum),
+            #+ s(Trip, bs='re', by=dum),
+    #        data=fulldat, gamma=1.4)
+
+
+#then he looked at residuals for the global models
+##line 569
+
+
+##Question: so we're using all of these models with CPUE as the Y var. How do we get standardized CPUE from that? Is it just predicted CPUE
+
+#Phil chose a model for standardization: line 794
+
+##phil says:
+# Create the STANDARDIZED CPUE INDEX by predicting CPUE with the model of choice
+# based on the variable average values
+
+#ok, I thought so
+#lines 820 ish, not sure why he selected those particular items.
+##he made an average dataset? that line 820 block. Why?
+
+#stopped on section 6 of phil code
 
 
 ##WIP below##4
