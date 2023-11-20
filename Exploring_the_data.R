@@ -179,7 +179,7 @@ ggplot(na.omit(corr_spot)) + aes(x=factor(Stat.Week), y=(CPUE_nom)) + geom_boxpl
 
 #what's next: either more exploratory plots or analysis
 
-#density of cpie data
+#density of cpue data
 ggplot(corr_spot) + aes(x=CPUE_nom) +geom_density()
 ##righted-tailed but passable as normal?
 
@@ -189,6 +189,46 @@ ggplot(corr_spot) + aes(x=CPUE_nom) +geom_density()
 ###########333
 #ANALYSIS
 ############
+#I want to include variables: ADFG Number (vessel ID), Season.ref (year - should I make this actual year class and not a factor?)
+##DOL Month (probaly this one over DOL week). And again, do I make this a time class variable? if so, how? What did phil do?)
+##altertatively, could do stat week isntead of DOL month
+
+#so that's four dependent variables: Vessel ID, Season (year), and Month. And that's... All I have. Factor variable, time variable, and time variable. 
+##might be able to include some sort of temperature variable at a later date.
+
+#let's try to make a gam
+library(mgcv)
+library(mgcViz)
+
+
+corr_spot_no_na <- na.omit(corr_spot)
+#model <- gam(cpue ~ s(vessel_ID, bs = "re") + s(year, month, bs = "cc"), data = your_data)
+model_1 <- gam(CPUE_nom ~ s(ADFG.Number, k=3) + s(Season.Ref, k=3) + s(DOL.Month, k=3), data = na.omit(corr_spot), gamma=1.4) #season ref might need to be integer
+##Season (year) and month might need to be time variables ##does not work
+model_2 <- gam(CPUE_nom ~ s(ADFG.Number, k=2), data=corr_spot_no_na) #does not work
+
+model_3 <- gam(CPUE_nom ~ s(DOL.Month, k=3), data=corr_spot_no_na) #this one works!
+summary(model_3)
+
+model_4 <- gam(CPUE_nom ~ s(Season.Ref, k=3), data=corr_spot_no_na) #does not work.
+
+model_5 <-gam(CPUE_nom ~ s(Batch.Year), data=corr_spot_no_na) #this one works
+
+model_6 <- gam(CPUE_nom ~ ADFG.Number + s(DOL.Month) + s(Batch.Year), data=corr_spot_no_na)
+
+
+#TROUBLESHOOTING
+summary(na.omit(corr_spot$CPUE_nom))
+range(na.omit(corr_spot$CPUE_nom))
+str(range(na.omit(corr_spot$CPUE_nom)))
+
+
+################
+####
+#PHIL NOTES
+
+
+
 #phil's null model:
 #m0 <- bam(log_ppm ~ Year, data=fulldat, gamma=1.4)
 ##Year is in the null model. Interesting.
@@ -238,6 +278,7 @@ ggplot(corr_spot) + aes(x=CPUE_nom) +geom_density()
 
 #############################################################3
 #I'm avoiding OceanAK altogether and importing straight into R
+##worth running the data wrangling before the filter, see if any of your "0" pots are filled in
 ###########################################################
 library(odbc)
 library(DBI)
