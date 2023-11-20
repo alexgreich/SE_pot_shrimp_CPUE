@@ -167,7 +167,7 @@ ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_point() #may
 ggplot(na.omit(corr_spot)) + aes(x=Batch.Year, y=(CPUE_nom)) + geom_smooth(method="lm") + geom_point()
 #ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_smooth(method="gam") + geom_point()
 #linearly, the CPUE increases with year. But it's more cyclical than linear
-ggplot(na.omit(corr_spot)) + aes(x=factor(Batch.Year), y=(CPUE_nom)) + geom_boxplot() 
+ggplot(na.omit(corr_spot)) + aes(x=factor(Batch.Year), y=(CPUE_nom)) + geom_boxplot() #cyclical
 ggplot(na.omit(corr_spot)) + aes(x=factor(Batch.Year), y=(CPUE_nom)) + geom_violin() 
 
 #look closer at the other variables in the pairs() plot:
@@ -203,18 +203,41 @@ library(mgcViz)
 
 corr_spot_no_na <- na.omit(corr_spot)
 #model <- gam(cpue ~ s(vessel_ID, bs = "re") + s(year, month, bs = "cc"), data = your_data)
-model_1 <- gam(CPUE_nom ~ s(ADFG.Number, k=3) + s(Season.Ref, k=3) + s(DOL.Month, k=3), data = na.omit(corr_spot), gamma=1.4) #season ref might need to be integer
+#model_1 <- gam(CPUE_nom ~ s(ADFG.Number, k=3) + s(Season.Ref, k=3) + s(DOL.Month, k=3), data = na.omit(corr_spot), gamma=1.4) #season ref might need to be integer
 ##Season (year) and month might need to be time variables ##does not work
-model_2 <- gam(CPUE_nom ~ s(ADFG.Number, k=2), data=corr_spot_no_na) #does not work
+#model_2 <- gam(CPUE_nom ~ s(ADFG.Number, k=2), data=corr_spot_no_na) #does not work
 
 model_3 <- gam(CPUE_nom ~ s(DOL.Month, k=3), data=corr_spot_no_na) #this one works!
 summary(model_3)
 
-model_4 <- gam(CPUE_nom ~ s(Season.Ref, k=3), data=corr_spot_no_na) #does not work.
+#model_4 <- gam(CPUE_nom ~ s(Season.Ref, k=3), data=corr_spot_no_na) #does not work.
 
 model_5 <-gam(CPUE_nom ~ s(Batch.Year), data=corr_spot_no_na) #this one works
 
-model_6 <- gam(CPUE_nom ~ ADFG.Number + s(DOL.Month) + s(Batch.Year), data=corr_spot_no_na)
+model_6 <- gam(CPUE_nom ~ ADFG.Number + s(DOL.Month, k=3) + s(Batch.Year, k=3), data=corr_spot_no_na) #k needs to equal something or else fails. Set gamma to somehting?
+summary(model_6)
+AIC(model_6, model_5, model_3) #model 6 wins
+BIC(model_6, model_5, model_3)
+
+model_7 <-  gam(CPUE_nom ~ ADFG.Number + s(Batch.Year, k=3), data=corr_spot_no_na)
+model_8 <-  gam(CPUE_nom ~ ADFG.Number + s(DOL.Month, k=3), data=corr_spot_no_na)
+
+model_9 <- gam(CPUE_nom ~ ADFG.Number + Batch.Year + s(DOL.Month, k=3), data=corr_spot_no_na)
+
+AIC(model_6, model_7, model_8, model_9) #model_6 still wins, but model 9 is close.
+BIC(model_6, model_7, model_8, model_9)
+
+model_10 <- gam(CPUE_nom ~ ADFG.Number + s(DOL.Month, k=4) + s(Batch.Year, k=4), data=corr_spot_no_na) #k needs to equal something or else fails. Set gamma to somehting?
+summary(model_10)
+
+AIC(model_6, model_10) #use model 6
+
+#plot
+#vis.gam(model_6) #chaos graph
+vis.gam(model_6, c('ADFG.Number', "Batch.Year"), type='response', plot.type = "persp") #terrible chaos graph
+vis.gam(model_6, c('Batch.Year', 'DOL.Month')) #ok this is not chaos. I dont like 3D plots tho
+vis.gam(model_6, c('DOL.Month', 'Batch.Year'))
+
 
 
 #TROUBLESHOOTING
