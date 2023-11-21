@@ -232,6 +232,22 @@ summary(model_10)
 
 AIC(model_6, model_10) #use model 6
 
+#"its important to remember you're after the year effect
+model_11 <- gam(CPUE_nom ~ Batch.Year + ADFG.Number + s(DOL.Month, k=3), data=corr_spot_no_na) #if I'm after the year effect, I'll want that
+AIC(model_11, model_6) #mod 11 is worse, but I think I want the year effect in there
+model_12 <- gam(CPUE_nom ~ Batch.Year + ADFG.Number + DOL.Month, data=corr_spot_no_na)
+AIC(model_11, model_12) #11
+
+model_13 <- gam(CPUE_nom ~ Batch.Year + ADFG.Number + s(Stat.Week, k=3), data=corr_spot_no_na)
+model_14 <- gam(CPUE_nom ~ Batch.Year + ADFG.Number + Stat.Week, data=corr_spot_no_na)
+model_15 <- gam(CPUE_nom ~ Batch.Year + ADFG.Number + Stat.Week, data=corr_spot_no_na)
+AIC(model_11, model_13) #model 13 wins
+BIC(model_11, model_13, model_14)
+
+#model 13 is my best model right now.
+
+
+
 #plot
 #vis.gam(model_6) #chaos graph
 vis.gam(model_6, c('ADFG.Number', "Batch.Year"), type='response', plot.type = "persp") #terrible chaos graph
