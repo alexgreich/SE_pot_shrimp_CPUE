@@ -99,9 +99,9 @@ sum_spot_shrimp_ernest <- sum_shrimp_ernest %>%
   right_join(max_pots_total) %>%
   select(-max_pots)
 
-View(sum_spot_shrimp_ernest)
-str(sum_shrimp_ernest)
-str(focus_years_ernest)
+#View(sum_spot_shrimp_ernest)
+#str(sum_shrimp_ernest)
+#str(focus_years_ernest)
 
 
 #calculate nominal CPUE
@@ -156,33 +156,33 @@ pairs(corr_spot2)
 
 #so, these graphs imply:
 ### Vessel (ADFG.Number) influences CPUE
-### Year (Batch.Year or Season.Ref, equivalently) have a relationship with CPUE
-##I dont really see a trend by month (DOL.Month), but we'll invlude it in the model
-##Idk about week. Looks more variable some weeks than others, likely beause there is higher effort in some weeks than others
-###CONCLUSION: VESSEL (ADFG.Number) and YEAR (Season.Ref) have ties to nominal cpue
-
-
 ggplot(na.omit(corr_spot)) + aes(x=ADFG.Number, y=(CPUE_nom)) +  geom_boxplot()
+
+### Year (Batch.Year or Season.Ref, equivalently) have a relationship with CPUE
 ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_point() #maybe geom_smooth does not work with caregorical variables
 ggplot(na.omit(corr_spot)) + aes(x=Batch.Year, y=(CPUE_nom)) + geom_smooth(method="lm") + geom_point()
-#ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_smooth(method="gam") + geom_point()
-#linearly, the CPUE increases with year. But it's more cyclical than linear
 ggplot(na.omit(corr_spot)) + aes(x=factor(Batch.Year), y=(CPUE_nom)) + geom_boxplot() #cyclical
-ggplot(na.omit(corr_spot)) + aes(x=factor(Batch.Year), y=(CPUE_nom)) + geom_violin() 
 
-#look closer at the other variables in the pairs() plot:
+##I dont really see a trend by month (DOL.Month), but we'll invlude it in the model
 ggplot(na.omit(corr_spot)) + aes(x=factor(DOL.Month), y=(CPUE_nom)) + geom_boxplot()
 ggplot(na.omit(corr_spot)) + aes(x=DOL.Month, y=(CPUE_nom)) + geom_point()
 
+##Idk about week. Looks more variable some weeks than others, likely beause there is higher effort in some weeks than others
 ggplot(na.omit(corr_spot)) + aes(x=factor(Stat.Week), y=(CPUE_nom)) + geom_boxplot()
+
+
+###CONCLUSION: VESSEL (ADFG.Number) and YEAR (Season.Ref) have ties to nominal cpue
+
+
+
+
 
 
 #what's next: either more exploratory plots or analysis
 
 #density of cpue data
 ggplot(corr_spot) + aes(x=CPUE_nom) +geom_density()
-##righted-tailed but passable as normal?
-
+ggplot(corr_spot) + aes(x=log(CPUE_nom+1)) +geom_density()
 
 
 
@@ -244,7 +244,11 @@ model_15 <- gam(CPUE_nom ~ Batch.Year + ADFG.Number + Stat.Week, data=corr_spot_
 AIC(model_11, model_13) #model 13 wins
 BIC(model_11, model_13, model_14)
 
-#model 13 is my best model right now.
+model_16 <- gam(log(CPUE_nom+1) ~ Batch.Year + ADFG.Number + s(Stat.Week, k=3), data=corr_spot_no_na) #mod 13 logged. BEST ONE
+model_17 <- gam(log(CPUE_nom+1) ~ ADFG.Number + s(DOL.Month, k=3) + s(Batch.Year, k=3), data=corr_spot_no_na)
+model_18 <- gam(log(CPUE_nom+1) ~ Batch.Year + ADFG.Number, data=corr_spot_no_na) 
+
+AIC(model_16, model_13, model_17, model_18)
 
 
 
@@ -255,11 +259,29 @@ vis.gam(model_6, c('Batch.Year', 'DOL.Month')) #ok this is not chaos. I dont lik
 vis.gam(model_6, c('DOL.Month', 'Batch.Year'))
 
 
+vis.gam(model_16, c('Batch.Year', 'Stat.Week'))
+vis.gam(model_16, c('Stat.Week', 'Batch.Year'))
+
+#more graphs
+ggplot(corr_spot_no_na) + aes(x=Season.Ref, y=log(CPUE_nom+1)) +geom_boxplot() #season ref is the same as batch year
+ggplot(corr_spot_no_na) +aes(x=Batch.Year, y=log(CPUE_nom+1)) + geom_smooth(method="lm")+ geom_point()
+ggplot(corr_spot_no_na) + aes(x=Stat.Week, y=log(CPUE_nom+1))+geom_smooth(method="loess") +geom_point() 
+
 
 #TROUBLESHOOTING
 summary(na.omit(corr_spot$CPUE_nom))
 range(na.omit(corr_spot$CPUE_nom))
 str(range(na.omit(corr_spot$CPUE_nom)))
+
+
+
+
+#ok we'll produce the results:
+#in phil's example, CPUE standardixation is the predicted terms in teh model, by year. Let's try this.
+#There needs to be a reference level? What should my refernce level be?
+##READ CPUE PAPERS - in CPUE std folder
+
+
 
 
 ################
