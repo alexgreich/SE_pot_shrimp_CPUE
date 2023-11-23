@@ -252,7 +252,19 @@ AIC(model_16, model_13, model_17, model_18)
 
 
 #more models
-#model_lm <- lm()
+model_lm <- lm(log(CPUE_nom+1) ~ Season.Ref + ADFG.Number + factor(Stat.Week), data=corr_spot_no_na)
+summary(model_lm)
+#test nested models too
+model_lm_int<- lm(log(CPUE_nom+1) ~ Season.Ref + ADFG.Number + factor(Stat.Week) + Season.Ref:ADFG.Number + ADFG.Number:factor(Stat.Week) + Season.Ref:factor(Stat.Week), data=corr_spot_no_na)
+summary(model_lm_int)
+##shoot, include date of landing intead? a gam with date of landing? #no, no gam. Try using julian date in the model tho
+###will need to make date of landing julian date
+###and look at tyler and phil code to see if date of landing is something that can be smoothed
+AIC(model_lm, model_lm_int)
+library(AICcmodavg)
+#AICc(model_lm, model_lm_int)
+
+#next do : model_lm_jdate
 
 
 #plot
