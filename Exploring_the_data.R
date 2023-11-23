@@ -251,6 +251,9 @@ model_18 <- gam(log(CPUE_nom+1) ~ Batch.Year + ADFG.Number, data=corr_spot_no_na
 AIC(model_16, model_13, model_17, model_18)
 
 
+#more models
+#model_lm <- lm()
+
 
 #plot
 #vis.gam(model_6) #chaos graph
@@ -265,8 +268,9 @@ vis.gam(model_16, c('Stat.Week', 'Batch.Year'))
 #more graphs
 ggplot(corr_spot_no_na) + aes(x=Season.Ref, y=log(CPUE_nom+1)) +geom_boxplot() #season ref is the same as batch year
 ggplot(corr_spot_no_na) +aes(x=Batch.Year, y=log(CPUE_nom+1)) + geom_smooth(method="lm")+ geom_point()
-ggplot(corr_spot_no_na) + aes(x=Stat.Week, y=log(CPUE_nom+1))+geom_smooth(method="loess") +geom_point() 
-
+ggplot(corr_spot_no_na) + aes(x=Stat.Week, y=log(CPUE_nom+1))+geom_smooth(method="loess") +geom_point()
+ggplot(corr_spot_no_na) + aes(x=factor(Stat.Week), y=log(CPUE_nom+1)) + geom_boxplot()
+ggplot(corr_spot_no_na) + aes(x=ADFG.Number, y=log(CPUE_nom+1))+geom_boxplot() #going to want to remove vessel 9999
 
 #TROUBLESHOOTING
 summary(na.omit(corr_spot$CPUE_nom))
@@ -278,8 +282,11 @@ str(range(na.omit(corr_spot$CPUE_nom)))
 
 #ok we'll produce the results:
 #in phil's example, CPUE standardixation is the predicted terms in teh model, by year. Let's try this.
-#There needs to be a reference level? What should my refernce level be?
+#There needs to be a reference level? What should my refernce level be?- see curry lab 2
 ##READ CPUE PAPERS - in CPUE std folder
+
+
+
 
 
 
