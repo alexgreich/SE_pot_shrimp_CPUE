@@ -17,6 +17,8 @@ library(ggcorrplot)
 library(corrplot)
 library(lubridate)
 library(chron)
+library(mgcv)
+library(mgcViz)
 
 ###################
 #load data  -> IN SUBSEQUENT VERSIONS, THIS SHOULD SOURCE DIRECTLY FROM ORACLE
@@ -131,12 +133,12 @@ sum_spot_shrimp_ernest <-  sum_spot_shrimp_ernest %>%
 names(sum_spot_shrimp_ernest)
 
 corr_spot <- sum_spot_shrimp_ernest %>% #I want to see the correlations graphed
-  select(ADFG.Number, Season.Ref, DOL.Month, Stat.Week, CPUE_nom, Batch.Year, Event.Date, vessel_count) %>%
+  select(ADFG.Number, Season.Ref, DOL.Month, Stat.Week, CPUE_nom, Batch.Year, Event.Date, vessel_count, jdate) %>%
   mutate(ADFG.Number = factor(ADFG.Number), Season.Ref = as.factor(Season.Ref)) 
 
 
 corr_spot2 <- sum_spot_shrimp_ernest %>% #a closer look
-  select(DOL.Month, Stat.Week, CPUE_nom, Batch.Year,vessel_count)
+  select(DOL.Month, Stat.Week, CPUE_nom, Batch.Year,vessel_count, jdate)
 
 #correlation plots
 #pairs(corr_spot) #argh it does not like non numeric arguments
@@ -171,6 +173,8 @@ ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_coun
 #this is a continuous integrer. I should smooth this?
 
 #JULIAN DATE GRAPH GOES HERE
+ggplot(na.omit(corr_spot)) + aes(x=jdate, y=log(CPUE_nom)) + geom_point() +geom_smooth(method="gam")
+ggplot(na.omit(corr_spot)) + aes(x=jdate, y=(CPUE_nom), group=vessel_count) + geom_boxplot()
 ##smooth or no? see phil work...
 
 #conclusion: my model will be: log(CPUE_nom) ~ factor(Season (year) variable) + time variable (smoothed?? Julian date or week?) + VESSEL effect + vessel #
@@ -198,7 +202,7 @@ corr_spot$f.Stat.Week <- factor(corr_spot$Stat.Week)
 summary(corr_spot$f.Stat.Week)
 
 
-corr_spot$Season.Ref <- relevel(corr_spot$Season.Ref, ref="10-11") #reference level selection was arbitrary, honesly. Try changing and see how that impacts results
+corr_spot$Season.Ref <- relevel(corr_spot$Season.Ref, ref="01-02") #reference level selection was arbitrary, honesly. Try changing and see how that impacts results
 corr_spot$ADFG.Number <- relevel(corr_spot$ADFG.Number, ref="52131") # this vessel had the most fish tickets. try changing to one with average # of fish tickets?
 corr_spot$f.Stat.Week <- relevel(corr_spot$f.Stat.Week, ref= "41") #41 is the median and the mode. made it a factor here.
 ##ask PHil for advice on how to select this.
@@ -210,17 +214,37 @@ lm_basic_global <- lm(log(CPUE_nom) ~ vessel_count + Season.Ref + ADFG.Number + 
 summary(lm_basic_global)
 
 #LM model with julian date
-
+lm_basic_global_jdate <- lm(log(CPUE_nom) ~ vessel_count + Season.Ref + ADFG.Number + jdate, data=na.omit(corr_spot))
+summary(lm_basic_global_jdate) #why NA for season 22-23? does not make sense
+alias(lm_basic_global_jdate)
 
 #GAM modwl with week
-
+gam_global_statweek <- gam(log(CPUE_nom) ~ vessel_count + Season.Ref + ADFG.Number + s(Stat.Week), data=na.omit(corr_spot))
 
 #GAM model with Julian date
-
+gam_global_jdate <- gam(log(CPUE_nom) ~ vessel_count + Season.Ref + ADFG.Number + s(jdate, k=4), data=(corr_spot))
+summary(gam_global_jdate)
+AIC(gam_global_statweek, gam_global_jdate)
+BIC(gam_global_statweek, gam_global_jdate)
+###if other factors are going to be smoothed, they need to be smoothed random effects. I'll need to read about that/
+##also check for interaction effects
 
 ##MODEL SELECTION!!
+gam_global_jdate_2 <- gam(log(CPUE_nom) ~ s(vessel_count, k=4) + Season.Ref + ADFG.Number + s(jdate, k=4), data=corr_spot) #k should be 4, not 3, for vessel count
+BIC(gam_global_jdate_2, gam_global_jdate) #same same
+summary(gam_global_jdate)
+summary(gam_global_jdate_2)
 
+BIC(gam_global_jdate_2, gam_global_jdate, lm_basic_global, lm_basic_global_jdate)
 
+gam_3 <- gam(log(CPUE_nom) ~ Season.Ref + ADFG.Number + s(jdate, k=4), data=corr_spot)
+gam_4 <- gam(log(CPUE_nom) ~ Season.Ref + ADFG.Number, data=corr_spot)
+gam_5 <- gam(log(CPUE_nom) ~ Season.Ref + s(jdate, k=4), data=corr_spot)
+
+BIC(gam_global_jdate, gam_global_jdate_2, gam_3, gam_4, gam_5) #says use gam_3 as the model
+AIC(gam_global_jdate, gam_global_jdate_2, gam_3, gam_4, gam_5)
+
+#ooh what about interaction effects
 
 
 
