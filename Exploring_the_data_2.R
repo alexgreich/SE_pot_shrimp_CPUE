@@ -15,6 +15,8 @@ library(RColorBrewer)
 library(viridis)
 library(ggcorrplot)
 library(corrplot)
+library(lubridate)
+library(chron)
 
 ###################
 #load data  -> IN SUBSEQUENT VERSIONS, THIS SHOULD SOURCE DIRECTLY FROM ORACLE
@@ -91,9 +93,10 @@ max_pots_total <- sum_shrimp_ernest %>% #get # pots fpr each fish ticket
   )%>%
   ungroup()
 
-sum_spot_shrimp_ernest <- sum_shrimp_ernest %>%
-  filter(Species.Code == 965) %>%
-  right_join(max_pots_total) %>%
+sum_spot_shrimp_ernest <- sum_shrimp_ernest %>% #this is where NA's appear for the season.ref code. need to figure out why.
+  #filter(Species.Code == 965) %>%
+  right_join(max_pots_total) %>% #probs has to do with the join, the NA's that is
+  filter(Species.Code == 965) %>% #switched this over here, no more NAs'
   select(-max_pots)
 
 #View(sum_spot_shrimp_ernest)
@@ -111,8 +114,13 @@ sum_spot_shrimp_ernest <- sum_spot_shrimp_ernest %>%
 
 
 #WRANGLE.EVENT.DATE.TO.JULIAN.DATE.PLEASE!!!!!!!!!!!!!!!!!:
-###wrangle wrangle here.###
+#jdate = as.POSIXlt(sum_spot_shrimp_ernest$Event.Date)$jul
 
+#sum_spot_shrimp_ernest <-  sum_spot_shrimp_ernest %>%
+ # mutate(jdate = ymd(Event.Date) - ymd("1970-01-01"))
+
+sum_spot_shrimp_ernest <-  sum_spot_shrimp_ernest %>%
+ mutate(jdate = julian(as.Date(Event.Date)))
 
 ###########################
 #the exploratory plots section
@@ -165,16 +173,41 @@ ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_coun
 #JULIAN DATE GRAPH GOES HERE
 ##smooth or no? see phil work...
 
-#conclusion: my model will be: log(CPUE_nom) ~ factor(Season (year) variable) + time variable (smoothed?? Julian date or week?) + 
+#conclusion: my model will be: log(CPUE_nom) ~ factor(Season (year) variable) + time variable (smoothed?? Julian date or week?) + VESSEL effect + vessel #
 ##I dont tbink I'll need to add a constand, since none of the cpue's should be 0.
 
 ###############################
 #the analysis section
 ####################################
+#set reference levels to the factors
+names(corr_spot)
+unique(corr_spot$Season.Ref) #there are some NA's. Why..?
+class(corr_spot$Season.Ref) # a factor
+median(corr_spot$Batch.Year) #2009
+
+unique(corr_spot$vessel_count)
+class(corr_spot$vessel_count) #maybe make this a gam
+
+unique(corr_spot$ADFG.Number) #vessel ID
+class(corr_spot$ADFG.Number)
+summary(corr_spot$ADFG.Number)
+
+class(corr_spot$Stat.Week)
+summary(corr_spot$Stat.Week)
+corr_spot$f.Stat.Week <- factor(corr_spot$Stat.Week)
+summary(corr_spot$f.Stat.Week)
+
+
+corr_spot$Season.Ref <- relevel(corr_spot$Season.Ref, ref="10-11") #reference level selection was arbitrary, honesly. Try changing and see how that impacts results
+corr_spot$ADFG.Number <- relevel(corr_spot$ADFG.Number, ref="52131") # this vessel had the most fish tickets. try changing to one with average # of fish tickets?
+corr_spot$f.Stat.Week <- relevel(corr_spot$f.Stat.Week, ref= "41") #41 is the median and the mode. made it a factor here.
+##ask PHil for advice on how to select this.
+##try 01-02 also, since that was the old baseline
 
 
 #LM model with week
-
+lm_basic_global <- lm(log(CPUE_nom) ~ vessel_count + Season.Ref + ADFG.Number + f.Stat.Week, data=na.omit(corr_spot)) #factors are year, vessel, and stat week. Maybe stat week should be a gam. Maybe vessel_count should be smoothed
+summary(lm_basic_global)
 
 #LM model with julian date
 
