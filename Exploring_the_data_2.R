@@ -130,9 +130,43 @@ corr_spot <- sum_spot_shrimp_ernest %>% #I want to see the correlations graphed
 corr_spot2 <- sum_spot_shrimp_ernest %>% #a closer look
   select(DOL.Month, Stat.Week, CPUE_nom, Batch.Year,vessel_count)
 
-#corrilation plots
-#pairs(corr_spot) #argh it does not like non numberic argulemts
+#correlation plots
+#pairs(corr_spot) #argh it does not like non numeric arguments
 pairs(corr_spot2)
+
+
+#let's look closer at those graphs individually
+
+### Vessel (ADFG.Number) influences CPUE
+ggplot(na.omit(corr_spot)) + aes(x=ADFG.Number, y=(CPUE_nom)) +  geom_boxplot()
+## a fixed factor, for now.
+
+### Year (Batch.Year or Season.Ref, equivalently) have a relationship with CPUE
+ggplot(na.omit(corr_spot)) + aes(x=Season.Ref, y=(CPUE_nom)) + geom_point() #maybe geom_smooth does not work with caregorical variables
+ggplot(na.omit(corr_spot)) + aes(x=Batch.Year, y=(CPUE_nom)) + geom_smooth(method="lm") + geom_point()
+ggplot(na.omit(corr_spot)) + aes(x=factor(Batch.Year), y=(CPUE_nom)) + geom_boxplot() #cyclical
+###this will be a fixed factor, so we can extract the year effect later
+
+##I dont really see a trend by month (DOL.Month), but we'll invlude it in the model
+ggplot(na.omit(corr_spot)) + aes(x=factor(DOL.Month), y=(CPUE_nom)) + geom_boxplot()
+ggplot(na.omit(corr_spot)) + aes(x=DOL.Month, y=(CPUE_nom)) + geom_point()
+#I'll use a different temporal variable instead
+
+##Idk about week. Looks more variable some weeks than others, likely beause there is higher effort in some weeks than others
+ggplot(na.omit(corr_spot)) + aes(x=factor(Stat.Week), y=(CPUE_nom)) + geom_boxplot()
+ggplot(na.omit(corr_spot)) + aes(x=Stat.Week, y=(CPUE_nom)) + geom_point()
+#mayyybe smooth? do we smooth time?
+
+#vessel number
+ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_count) + geom_boxplot()
+ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_count) + geom_boxplot()
+#this is a continuous integrer. I should smooth this?
+
+#JULIAN DATE GRAPH GOES HERE
+##smooth or no? see phil work...
+
+#conclusion: my model will be: log(CPUE_nom) ~ factor(Season (year) variable) + time variable (smoothed?? Julian date or week?) + 
+##I dont tbink I'll need to add a constand, since none of the cpue's should be 0.
 
 ###############################
 #the analysis section
