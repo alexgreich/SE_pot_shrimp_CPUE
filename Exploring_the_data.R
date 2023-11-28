@@ -265,6 +265,7 @@ library(AICcmodavg)
 #AICc(model_lm, model_lm_int)
 
 #next do : model_lm_jdate
+##but first read about best practices
 
 
 #plot
