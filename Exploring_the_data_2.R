@@ -195,3 +195,9 @@ ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_coun
 ############################
 #the describe-the-data plots section
 ###make that CPUE graph
+
+
+#graph if we don't use gams
+
+
+#graph if we do use gams
