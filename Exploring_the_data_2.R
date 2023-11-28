@@ -246,6 +246,13 @@ AIC(gam_global_jdate, gam_global_jdate_2, gam_3, gam_4, gam_5)
 
 #ooh what about interaction effects
 
+gam_global_int <- gam(log(CPUE_nom) ~ vessel_count + Season.Ref + ADFG.Number + s(jdate, k=4) + vessel_count:Season.Ref + ADFG.Number:Season.Ref, data=(corr_spot))
+gam_global_int_2 <- gam(log(CPUE_nom) ~ vessel_count + Season.Ref + ADFG.Number + s(jdate, k=4) + vessel_count:Season.Ref, data=(corr_spot))
+##hmm how to check int effects for gams?
+summary(gam_global_int)
+summary(gam_global_int_2)
+
+BIC(gam_global_jdate, gam_global_jdate_2, gam_3, gam_4, gam_5, gam_global_int_2) #ok, keeping those interaction effects does not seem to make a difference. gam_3 is still our go to
 
 
 
