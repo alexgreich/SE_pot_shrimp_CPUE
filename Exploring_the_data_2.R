@@ -258,7 +258,30 @@ BIC(gam_global_jdate, gam_global_jdate_2, gam_3, gam_4, gam_5, gam_global_int_2)
 
 ############################
 #the describe-the-data plots section
+##################################
+#predict response variable (the standardized cpue)
+pred_ln_U <- predict(gam_3)
+
+#attach data frame
+df_std_CPUE <- data.frame(corr_spot, pred_ln_U)
+
+#extract coeff
+coef(gam_3)
+
+
+#graph
+ggplot(data=corr_spot, aes(x=Season.Ref, y=log(CPUE_nom), color=ADFG.Number)) +
+  theme_linedraw() +
+  geom_point() +
+  #facet_wrap(~fArea) +
+  geom_line(aes(y=pred_ln_U))
+###end curry code
+
+##need to make a prediction per year? how did phil do it?
+
 ###make that CPUE graph
+
+
 
 
 #graph if we don't use gams
