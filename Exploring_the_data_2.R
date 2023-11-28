@@ -120,7 +120,14 @@ sum_spot_shrimp_ernest <- sum_spot_shrimp_ernest %>%
  # mutate(jdate = ymd(Event.Date) - ymd("1970-01-01"))
 
 sum_spot_shrimp_ernest <-  sum_spot_shrimp_ernest %>%
- mutate(jdate = julian(as.Date(Event.Date)))
+ mutate(landing_date = parse_date_time(Event.Date,c("%Y/%m/%d"))) %>%
+  mutate(jdate = as.numeric(format(landing_date,"%j"))) #nailed it!!!
+
+
+#landing_date <- parse_date_time(sum_shrimp_ernest$Event.Date,c("%Y/%m/%d"))
+#Jdate_exp = as.numeric(format(landing_date,"%j")) #nailed it!
+
+#sum_spot_shrimp_ernest$jdate <- Jdate_exp
 
 ###########################
 #the exploratory plots section
