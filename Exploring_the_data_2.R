@@ -113,21 +113,14 @@ sum_spot_shrimp_ernest <- sum_spot_shrimp_ernest %>%
 #Q: do seasons need to be in order??
 
 
-#WRANGLE.EVENT.DATE.TO.JULIAN.DATE.PLEASE!!!!!!!!!!!!!!!!!:
-#jdate = as.POSIXlt(sum_spot_shrimp_ernest$Event.Date)$jul
-
-#sum_spot_shrimp_ernest <-  sum_spot_shrimp_ernest %>%
- # mutate(jdate = ymd(Event.Date) - ymd("1970-01-01"))
-
+#wrangle jdate
 sum_spot_shrimp_ernest <-  sum_spot_shrimp_ernest %>%
  mutate(landing_date = parse_date_time(Event.Date,c("%Y/%m/%d"))) %>%
   mutate(jdate = as.numeric(format(landing_date,"%j"))) #nailed it!!!
 
+#great. does phil smooth week and/or jdate and/or vessel #? and are any of these treated as a factor???
 
-#landing_date <- parse_date_time(sum_shrimp_ernest$Event.Date,c("%Y/%m/%d"))
-#Jdate_exp = as.numeric(format(landing_date,"%j")) #nailed it!
 
-#sum_spot_shrimp_ernest$jdate <- Jdate_exp
 
 ###########################
 #the exploratory plots section
