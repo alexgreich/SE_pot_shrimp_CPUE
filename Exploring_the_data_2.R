@@ -159,7 +159,7 @@ ggplot(na.omit(corr_spot)) + aes(x=Stat.Week, y=(CPUE_nom)) + geom_point()
 
 #vessel number
 ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_count) + geom_boxplot()
-ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_count) + geom_boxplot()
+ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_count) + geom_violin()
 #this is a continuous integrer. I should smooth this?
 
 #JULIAN DATE GRAPH GOES HERE
@@ -176,7 +176,16 @@ ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_coun
 #LM model with week
 
 
-#LM model with 
+#LM model with julian date
+
+
+#GAM modwl with week
+
+
+#GAM model with Julian date
+
+
+##MODEL SELECTION!!
 
 
 
