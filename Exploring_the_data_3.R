@@ -175,6 +175,8 @@ ggplot(na.omit(corr_spot)) + aes(x=vessel_count, y=(CPUE_nom), group=vessel_coun
 #JULIAN DATE GRAPH GOES HERE
 ggplot(na.omit(corr_spot)) + aes(x=jdate, y=log(CPUE_nom)) + geom_point() +geom_smooth(method="gam")
 ggplot(na.omit(corr_spot)) + aes(x=jdate, y=(CPUE_nom), group=vessel_count) + geom_boxplot()
+
+ggplot(corr_spot_limited) + aes(x=jdate, y=log(CPUE_nom)) + geom_point() +geom_smooth(method="gam") #without 22-23
 ##smooth or no? see phil work...
 
 #interaction between vessel ID and year?
@@ -449,7 +451,7 @@ std_dat %>%
    ) -> std_dat_ranef_lim
  
  
- (a<-ggplot(data=std_dat_ranef_lim) + aes(x=Season.Ref, y=bt_cpue) + #GOODPLOT
+ (a<-ggplot(data=std_dat_ranef_lim) + aes(x=Season.Ref, y=bt_cpue) + #Inconsistent results when ADFG.Number changes
    geom_point(size=3)+
    geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
    geom_line(aes(group=1))+ #that works+
@@ -459,7 +461,7 @@ std_dat %>%
    theme(axis.text.x = element_text(angle = 45, hjust = 1))#+
    #  scale_y_continuous(breaks = c(1,2,3,4,5,6), expand=c(0,0))+
     # ylim(1.8, 5)
-   )
+   ) 
  
  #add the nominal cpue in there, for comparison
  (a2<-ggplot(data=std_dat_ranef_lim) + aes(x=Season.Ref, y=bt_cpue) + #GOODPLOT
@@ -534,3 +536,13 @@ std_dat %>%
  #################################
 ###model residual examination/model diagnostics
  ###############################3
+ 
+ 
+ 
+ ###############################
+ #dealing with interaction effects
+ ################################
+ #ADFG.Number:Year; jdate:Year
+ #while I'd prefer not to deal with jdate:year,ADFG.Number:Year is problematic and needs to be dealt with'
+ #see the literature
+ #one method: predicting (weighted?) CPUE values for all vessel #'s then averaging?
