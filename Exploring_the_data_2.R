@@ -278,6 +278,84 @@ ggplot(data=corr_spot, aes(x=Season.Ref, y=log(CPUE_nom), color=ADFG.Number)) +
 ###end curry code
 
 ##need to make a prediction per year? how did phil do it?
+# Data set of average variables to predict CPUE from: 
+std_dat<- expand.grid(Season.Ref = as.factor(unique(corr_spot$Season.Ref)),
+                              #Gear = "Mechanical jigs", #table(cpue_dat$Gear)
+                              #Hooks = round(mean(cpue_dat$Hooks),0), 
+                              #Line_no = 2, #mean(cpue_dat$Line_no) unique(cpue_dat$Line_no)
+                              jdate = round(mean(corr_spot$jdate),0),   #  unique(cpue_dat$Jdate)
+                              ADFG.Number = 52131 #table(corr_spot$ADFG.Number)
+                      )
+pred_cpue <- predict(gam_3, std_dat, type = "response", se = TRUE)
+
+
+#Put the standardized CPUE and SE into the data frame and convert to
+#backtransformed (bt) CPUE
+std_dat %>% 
+  mutate(fit = pred_cpue$fit,
+         se = pred_cpue$se.fit,
+         upper = fit + (2 * se),
+         lower = fit - (2 * se),
+         bt_cpue = exp(fit),
+         bt_upper = exp(upper),
+         bt_lower = exp(lower),
+         bt_se = (bt_upper - bt_cpue) / 2, #,
+         bt_cv = bt_se/bt_cpue
+  ) -> std_dat
+
+
+#nominal cpue for comparison
+ corr_spot %>%
+  group_by(Season.Ref) %>%
+  dplyr::summarise(log_fsh_cpue = mean(log(CPUE_nom),na.rm=T),
+                   fsh_cpue = exp(log_fsh_cpue),
+                   sd = sd(log(CPUE_nom),na.rm=T),
+                   n = length(CPUE_nom),
+                   se = sd / (n ^ (1/2)),
+                   var = var(log(CPUE_nom)),
+                   raw_cv = sd / fsh_cpue,
+                   upper = exp(log_fsh_cpue + (2 * se)),
+                   lower = exp(log_fsh_cpue - (2 * se)),
+                   cv = (upper - fsh_cpue) / 2) -> fsh_sum_log
+ 
+ #now I have the standardized CPUE: in std_dat dataframe, and nominal CPUE: in fsh_sum_log df.
+ 
+ #next graph, phil code line 860
+ fsh_sum_log %>%
+   select(Season.Ref, cpue = fsh_cpue, upper, lower) %>% 
+   mutate(CPUE = "Nominal CPUE",
+          Season.Ref = as.factor(Season.Ref)) %>% 
+   bind_rows(std_dat%>% 
+               select(Season.Ref, cpue = bt_cpue, upper = bt_upper, lower = bt_lower) %>% 
+               mutate(CPUE = "GAM Standard log")) %>% 
+   mutate(Season.Ref = as.numeric(as.character(Season.Ref))) %>%
+   ggplot() +
+   geom_ribbon(aes(Season.Ref, ymin = lower, ymax = upper, fill = CPUE), 
+               colour = NA, alpha = 0.3) +
+   geom_point(aes(Year, cpue, colour = CPUE, shape = CPUE), size = 2) +
+   geom_line(aes(Year, cpue, colour = CPUE, group = CPUE), size = 1) +
+   # scale_colour_grey(name = "Standardized CPUE") +
+   # scale_fill_grey(name = "Standardized CPUE") +
+   scale_colour_manual(values = c("darkcyan", "goldenrod"), name = "Standardized CPUE") +
+   scale_fill_manual(values = c("darkcyan", "goldenrod"), name = "Standardized CPUE") +
+   scale_shape_manual(values = c(19, 17), name = "Standardized CPUE") +
+   #scale_x_continuous(breaks = axis$breaks, labels = axis$labels) + 
+   labs(x = "", y = "Fishery CPUE (round lb/min)\n") +
+   theme(legend.position = c(0.8, 0.8)) +
+   expand_limits(y = 0)
+ 
+ 
+ #my graph
+ ggplot() + aes() + 
+   geom_point(color="black", aes(x= Season.Ref, y= fsh_cpue), data=fsh_sum_log)+
+   geom_point(color="red", data= std_dat, aes(x=Season.Ref, y=bt_cpue))
+
+
+
+
+
+
+
 
 ###make that CPUE graph
 
