@@ -391,6 +391,30 @@ std_dat %>%
    geom_point(color="red", data= std_dat_ranef, aes(x=Season.Ref, y=bt_cpue)) +
    geom_errorbar(color="red", aes(x=Season.Ref, ymin=bt_lower, ymax=bt_upper), data=std_dat_ranef)
  
+ #repliction of max's graph
+ #using the GAMM
+ ggplot() + aes() +
+   geom_point(data= std_dat_ranef, aes(x=Season.Ref, y=bt_cpue), size=2)+
+   geom_errorbar( aes(x=Season.Ref, ymin=bt_lower, ymax=bt_upper), data=std_dat_ranef) +
+   geom_line(data= std_dat_ranef, aes(x=Season.Ref, y=bt_cpue, group=Season.Ref), size=2)
+ 
+ ggplot(data=std_dat_ranef) + aes(x=Season.Ref, y=bt_cpue) + #GOODPLOT
+   geom_point(size=2)+
+   geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
+   geom_line(aes(group=1))+ #that works+
+   geom_hline(aes(yintercept=mean(std_dat_ranef$bt_cpue)), linetype="dashed")+
+   theme_cowplot()+
+   labs(y="Standardized CPUE (lbs/pots)", x="Season", title = "Upper Ernest Sound" )
+ #dashed line is average std cpue for this area. is max's dashed line the std cpue for all areas?
+ #more conservateive(smaller) CPUE's than max's graph. And what is going on in 22-23? Chaos. Is that legit or is something weird in the data?
+ ##confidence intervals larger, std CPUE values are lower. Did the old method result in an overestimation? Or is my method an underestimation?
+ 
+ #effort and harvest plot below. we will need: harvest and effort total(?) per year
+ 
+ ############33
+ #look more closely at the resdual and indivudal graphs.
+ #what does the jdate graph look like?
+ 
 
 ###########################
 ###make that CPUE graph
