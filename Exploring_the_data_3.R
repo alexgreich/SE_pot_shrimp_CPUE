@@ -455,7 +455,20 @@ std_dat %>%
    geom_line(aes(group=1))+ #that works+
    geom_hline(aes(yintercept=mean(std_dat_ranef_lim$bt_cpue)), linetype="dashed")+
    theme_cowplot()+
-   labs(y="Standardized CPUE (lbs/pots)", x="Season", title = "Upper Ernest Sound" ))
+   labs(y="Standardized or Nominal CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+   )
+ 
+ #add the nominal cpue in there, for comparison
+ (a2<-ggplot(data=std_dat_ranef_lim) + aes(x=Season.Ref, y=bt_cpue) + #GOODPLOT
+     geom_point(aes(x=Season.Ref, y=fsh_cpue), data=fsh_sum_log_lim, color="springgreen", size=3) + #adding nominal cpue as blue
+     geom_line(aes(x=Season.Ref, y=fsh_cpue, group=1), data=fsh_sum_log_lim, color="springgreen") + 
+     geom_point(size=3)+
+     geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
+     geom_line(aes(group=1))+ #that works+
+     geom_hline(aes(yintercept=mean(std_dat_ranef_lim$bt_cpue)), linetype="dashed")+
+     theme_cowplot()+
+     labs(y="Standardized or Nominal CPUE (lbs/pots)", x="Season", title = "Upper Ernest Sound" ))
  
  #my graph
  #nominal cpue for comparison
@@ -504,11 +517,12 @@ std_dat %>%
    geom_point(aes(y=Effort), shape=15, size=3) +
    geom_line(aes(y=Effort, group=1), linetype="dashed") +
    theme_cowplot()+
-   labs(x="Season", y="Harvest (lbs) or Effort (pots)"))
+   labs(x="Season", y="Harvest (lbs) or Effort (pots)")+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1)))
  
  #combine the graphs
  library(patchwork)
- (maxplot <- a/b)
+ (ab <- a/b)
  
  #save the plot
   
