@@ -449,13 +449,13 @@ std_dat %>%
    ) -> std_dat_ranef_lim
  
  
- ggplot(data=std_dat_ranef_lim) + aes(x=Season.Ref, y=bt_cpue) + #GOODPLOT
-   geom_point(size=2)+
+ (a<-ggplot(data=std_dat_ranef_lim) + aes(x=Season.Ref, y=bt_cpue) + #GOODPLOT
+   geom_point(size=3)+
    geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
    geom_line(aes(group=1))+ #that works+
    geom_hline(aes(yintercept=mean(std_dat_ranef_lim$bt_cpue)), linetype="dashed")+
    theme_cowplot()+
-   labs(y="Standardized CPUE (lbs/pots)", x="Season", title = "Upper Ernest Sound" )
+   labs(y="Standardized CPUE (lbs/pots)", x="Season", title = "Upper Ernest Sound" ))
  
  #my graph
  #nominal cpue for comparison
@@ -491,7 +491,26 @@ std_dat %>%
  #the second graph
  #need: harvest... and effort. 
  #dang, I did not keep those in my wrangle. Back to the wrangle
+ ##wrangle done.
+ #let;s make a df and plot of total weight and pots by season
+ raw_totals <- corr_spot_limited %>%
+   group_by(Season.Ref) %>%
+   dplyr::summarize(Harvest = sum(total_weight),
+                    Effort = sum(max_pots_2))
  
+ (b<-ggplot(raw_totals) + aes(x=Season.Ref) +
+   geom_point(aes(y=Harvest), shape=0, size=3)+ #harvest graph
+   geom_line(aes(y=Harvest, group=1))+
+   geom_point(aes(y=Effort), shape=15, size=3) +
+   geom_line(aes(y=Effort, group=1), linetype="dashed") +
+   theme_cowplot()+
+   labs(x="Season", y="Harvest (lbs) or Effort (pots)"))
+ 
+ #combine the graphs
+ library(patchwork)
+ (maxplot <- a/b)
+  
+  
  
  #################################
 ###model residual examination/model diagnostics
