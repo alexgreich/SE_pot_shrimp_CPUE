@@ -284,7 +284,7 @@ std_dat<- expand.grid(Season.Ref = as.factor(unique(corr_spot$Season.Ref)),
                               #Hooks = round(mean(cpue_dat$Hooks),0), 
                               #Line_no = 2, #mean(cpue_dat$Line_no) unique(cpue_dat$Line_no)
                               jdate = round(mean(corr_spot$jdate),0),   #  unique(cpue_dat$Jdate)
-                              ADFG.Number = 52131 #table(corr_spot$ADFG.Number)
+                              ADFG.Number = 52131 #table(corr_spot$ADFG.Number) #52131 #56332 #41228
                       )
 pred_cpue <- predict(gam_3, std_dat, type = "response", se = TRUE)
 
@@ -348,7 +348,10 @@ std_dat %>%
  #my graph
  ggplot() + aes() + 
    geom_point(color="black", aes(x= Season.Ref, y= fsh_cpue), data=fsh_sum_log)+
-   geom_point(color="red", data= std_dat, aes(x=Season.Ref, y=bt_cpue))
+   geom_errorbar(aes(x=Season.Ref, ymin=lower, ymax=upper), data=fsh_sum_log) + 
+   geom_point(color="red", data= std_dat, aes(x=Season.Ref, y=bt_cpue)) +
+   geom_errorbar(color="red", aes(x=Season.Ref, ymin=bt_lower, ymax=bt_upper), data=std_dat)
+ #I've tested this with a few different reference vessels. REally seems to change, depending on my reference vessel. Is there a more robust way to do this?
 
 
 
