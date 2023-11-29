@@ -254,7 +254,10 @@ summary(gam_global_int_2)
 
 BIC(gam_global_jdate, gam_global_jdate_2, gam_3, gam_4, gam_5, gam_global_int_2) #ok, keeping those interaction effects does not seem to make a difference. gam_3 is still our go to
 
-
+#let's make a random effect
+gam_3_ranef <- gam(log(CPUE_nom) ~ Season.Ref + s(ADFG.Number, bs="re") + s(jdate, k=4), data=corr_spot)
+summary(gam_3_ranef)
+BIC(gam_3, gam_3_ranef) #gam_3_ranef wins
 
 ############################
 #the describe-the-data plots section
@@ -354,12 +357,42 @@ std_dat %>%
  #I've tested this with a few different reference vessels. REally seems to change, depending on my reference vessel. Is there a more robust way to do this?
 
 
+#################
+ #ranef mod
+ ############################
+ std_dat_ranef<- expand.grid(Season.Ref = as.factor(unique(corr_spot$Season.Ref)),
+                       jdate = round(mean(corr_spot$jdate),0),   #  unique(cpue_dat$Jdate)
+                       ADFG.Number = 52131 #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+ )
+ pred_cpue_ranef <- predict(gam_3_ranef, std_dat_ranef, type = "response", se = TRUE)
 
 
+ #Put the standardized CPUE and SE into the data frame and convert to
+ #backtransformed (bt) CPUE
+ std_dat_ranef %>% 
+   mutate(fit = pred_cpue$fit,
+          se = pred_cpue$se.fit,
+          upper = fit + (2 * se),
+          lower = fit - (2 * se),
+          bt_cpue = exp(fit),
+          bt_upper = exp(upper),
+          bt_lower = exp(lower),
+          bt_se = (bt_upper - bt_cpue) / 2, #,
+          bt_cv = bt_se/bt_cpue
+   ) -> std_dat_ranef
+ 
+ #nominal cpue ranef
+ #same as above. use the fsh_sum_log df
+ 
+ #my graph
+ ggplot() + aes() + 
+   geom_point(color="black", aes(x= Season.Ref, y= fsh_cpue), data=fsh_sum_log)+
+   geom_errorbar(aes(x=Season.Ref, ymin=lower, ymax=upper), data=fsh_sum_log) + 
+   geom_point(color="red", data= std_dat_ranef, aes(x=Season.Ref, y=bt_cpue)) +
+   geom_errorbar(color="red", aes(x=Season.Ref, ymin=bt_lower, ymax=bt_upper), data=std_dat_ranef)
+ 
 
-
-
-
+###########################
 ###make that CPUE graph
 
 
