@@ -429,7 +429,7 @@ std_dat %>%
  #oh and predict std cpue:
  std_dat_ranef_lim<- expand.grid(Season.Ref = as.factor(unique(corr_spot_limited$Season.Ref)),
                              jdate = round(mean(corr_spot_limited$jdate),0),   #  unique(cpue_dat$Jdate)
-                             ADFG.Number = 52131 #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+                             ADFG.Number = 41228 #table(corr_spot$ADFG.Number) #52131 #56332 #41228
  )
  pred_cpue_ranef_lim <- predict(gam_3_ranef_limited, std_dat_ranef_lim, type = "response", se = TRUE)
  
@@ -455,8 +455,10 @@ std_dat %>%
    geom_line(aes(group=1))+ #that works+
    geom_hline(aes(yintercept=mean(std_dat_ranef_lim$bt_cpue)), linetype="dashed")+
    theme_cowplot()+
-   labs(y="Standardized or Nominal CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
-   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+   labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))#+
+   #  scale_y_continuous(breaks = c(1,2,3,4,5,6), expand=c(0,0))+
+    # ylim(1.8, 5)
    )
  
  #add the nominal cpue in there, for comparison
@@ -522,9 +524,10 @@ std_dat %>%
  
  #combine the graphs
  library(patchwork)
- (ab <- a/b)
+ (ab <- a/b) #going to want to adjust axes before finalizing
  
  #save the plot
+ ggsave("draft_std_cpue_ernest.png",plot=ab, width=7, height=8)
   
   
  
