@@ -592,7 +592,7 @@ std_dat %>%
    ungroup() %>%
    group_by(Season.Ref) %>%
    dplyr::summarise(Weighted_avg_fit = weighted.mean(x=fit, w=ADFG.no.count), #maybe I'm grouping wrong. I dont want to summarize per vessel, I want to summarize over all vessels per year. Oh, I want to regroup by year for this second part
-                    Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) #%>% # hmm what do I want this to look like? see other predict table : View(std_dat_ranef_lim )
+                    Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) -> new_dat_for_avg_2 #%>% # hmm what do I want this to look like? see other predict table : View(std_dat_ranef_lim )
   # ungroup()   #error above. Hmm. Maybe I need to weight in separate steps.
  
  new_dat_for_avg %>% 
