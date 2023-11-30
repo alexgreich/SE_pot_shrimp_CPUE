@@ -562,6 +562,7 @@ std_dat %>%
  #For example if g is a factor then s(g,bs="re") produces a random coefficient for each level of g, with the random coefficients all modelled as i.i.d. normal.
 
  ggplot(corr_spot_limited) + aes(x=ADFG.Number, y=log(CPUE_nom)) + geom_boxplot(aes(group=ADFG.Number))
+ ggplot(corr_spot_limited) + aes(x=ADFG.Number) + geom_bar(aes(group=ADFG.Number)) #lots of entries from a few of the boats.
  summary(gam_3_ranef_limited)
  summary(gam_3_lim)
  
@@ -595,17 +596,76 @@ std_dat %>%
                     Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) -> new_dat_for_avg_2 #%>% # hmm what do I want this to look like? see other predict table : View(std_dat_ranef_lim )
   # ungroup()   #error above. Hmm. Maybe I need to weight in separate steps.
  
- new_dat_for_avg %>% 
-   mutate(fit = pred_for_avg$fit,
-          se = pred_for_avg$se.fit,
-          upper = fit + (2 * se),
-          lower = fit - (2 * se),
-          bt_cpue = exp(fit),
+ new_dat_for_avg_2 %>% 
+   mutate(#fit = pred_for_avg$fit,
+          #se = pred_for_avg$se.fit,
+          upper = Weighted_avg_fit + (2 * Weighted_avg_se),
+          lower = Weighted_avg_fit - (2 * Weighted_avg_se),
+          bt_cpue = exp(Weighted_avg_fit),
           bt_upper = exp(upper),
           bt_lower = exp(lower),
           bt_se = (bt_upper - bt_cpue) / 2, #,
           bt_cv = bt_se/bt_cpue
+   ) -> new_dat_for_avg_3
+
+ #graph that 
+ ggplot(data=new_dat_for_avg_3) + aes(x=Season.Ref, y=bt_cpue) + 
+     geom_point(size=3)+
+     geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
+     geom_line(aes(group=1))+ #that works+
+     #geom_hline(aes(yintercept=mean(bt_cpue)), linetype="dashed")+
+     theme_cowplot()+
+     labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
+     theme(axis.text.x = element_text(angle = 45, hjust = 1))#+
+   #  those confidence intervals are huge. Something to do with how I averaged the se? IS averaging the se ok?
+ ##why did my se average technique make those confidence bands huge? Some of the boats have a large variance, and those boats fished frequently?
+ #could be due to the fixed effect, not the random effect
+ 
+ 
+ ############################################################################
+ ##try this with the random effect model, for a more precise estimate??
+ new_dat_for_avg<- expand.grid(Season.Ref = as.factor(unique(corr_spot_limited$Season.Ref)),
+                               jdate = round(mean(corr_spot_limited$jdate),0),   #  unique(cpue_dat$Jdate)... might need to expand and average this over all dates too
+                               ADFG.Number = as.factor(unique(corr_spot_limited$ADFG.Number)) #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+                               
+ )
+ pred_for_avg <- predict(gam_3_ranef_limited, new_dat_for_avg, type = "response", se = TRUE)
+ 
+ new_dat_for_avg %>% 
+   mutate(fit = pred_for_avg$fit,
+          se = pred_for_avg$se.fit
    ) -> new_dat_for_avg
  
+ new_dat_for_avg %>% 
+   group_by(ADFG.Number) %>%
+   dplyr::mutate(ADFG.no.count = n()) %>%
+   ungroup() %>%
+   group_by(Season.Ref) %>%
+   dplyr::summarise(Weighted_avg_fit = weighted.mean(x=fit, w=ADFG.no.count), 
+                    Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) -> new_dat_for_avg_2
  
+ new_dat_for_avg_2 %>% 
+   mutate(#fit = pred_for_avg$fit,
+     #se = pred_for_avg$se.fit,
+     upper = Weighted_avg_fit + (2 * Weighted_avg_se),
+     lower = Weighted_avg_fit - (2 * Weighted_avg_se),
+     bt_cpue = exp(Weighted_avg_fit),
+     bt_upper = exp(upper),
+     bt_lower = exp(lower),
+     bt_se = (bt_upper - bt_cpue) / 2, #,
+     bt_cv = bt_se/bt_cpue
+   ) -> new_dat_for_avg_3
+ 
+ ggplot(data=new_dat_for_avg_3) + aes(x=Season.Ref, y=bt_cpue) + 
+   geom_point(size=3)+
+   geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
+   geom_line(aes(group=1))+ #that works+
+   #geom_hline(aes(yintercept=mean(bt_cpue)), linetype="dashed")+
+   theme_cowplot()+
+   labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ #confidene intervals are still HUGE. And the values are pretty low.
+ #should I NOT be averaging the standard error?
+ #oh of course the standard error was lower before. IT was only predicted/fit to one vessel, rather than all of them
+ ###################################################################################
  
