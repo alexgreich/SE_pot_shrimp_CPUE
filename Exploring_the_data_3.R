@@ -587,14 +587,19 @@ std_dat %>%
           se = pred_for_avg$se.fit
    ) -> new_dat_for_avg
  
- new_dat_for_avg %>% #need to qc this!!!!!! Shit am I not git connected right now?
+ vessel_fish_ticket_count <- corr_spot_limited %>% #counting # of times an individual vessel has a fish ticket
    group_by(ADFG.Number) %>%
-   dplyr::mutate(ADFG.no.count = n()) %>%
-   ungroup() %>%
+   dplyr::summarise(ADFG.no.count = n()) %>%
+   ungroup()
+ 
+ new_dat_for_avg %>% 
+   # group_by(ADFG.Number) %>%
+   # dplyr::mutate(ADFG.no.count = n()) %>% #this is not right. Need to count how many times a vessel has a fish ticket in the OG data
+   # ungroup() %>%
+   left_join(vessel_fish_ticket_count) %>% #fixed it
    group_by(Season.Ref) %>%
-   dplyr::summarise(Weighted_avg_fit = weighted.mean(x=fit, w=ADFG.no.count), #maybe I'm grouping wrong. I dont want to summarize per vessel, I want to summarize over all vessels per year. Oh, I want to regroup by year for this second part
-                    Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) -> new_dat_for_avg_2 #%>% # hmm what do I want this to look like? see other predict table : View(std_dat_ranef_lim )
-  # ungroup()   #error above. Hmm. Maybe I need to weight in separate steps.
+   dplyr::summarise(Weighted_avg_fit = weighted.mean(x=fit, w=ADFG.no.count), 
+                    Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) -> new_dat_for_avg_2
  
  new_dat_for_avg_2 %>% 
    mutate(#fit = pred_for_avg$fit,
@@ -636,10 +641,16 @@ std_dat %>%
           se = pred_for_avg$se.fit
    ) -> new_dat_for_avg
  
- new_dat_for_avg %>% 
+ vessel_fish_ticket_count <- corr_spot_limited %>% #counting # of times an individual vessel has a fish ticket
    group_by(ADFG.Number) %>%
-   dplyr::mutate(ADFG.no.count = n()) %>%
-   ungroup() %>%
+   dplyr::summarise(ADFG.no.count = n()) %>%
+   ungroup()
+ 
+ new_dat_for_avg %>% 
+  # group_by(ADFG.Number) %>%
+  # dplyr::mutate(ADFG.no.count = n()) %>% #this is not right. Need to count how many times a vessel has a fish ticket in the OG data
+  # ungroup() %>%
+   left_join(vessel_fish_ticket_count) %>% #fixed it
    group_by(Season.Ref) %>%
    dplyr::summarise(Weighted_avg_fit = weighted.mean(x=fit, w=ADFG.no.count), 
                     Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) -> new_dat_for_avg_2
@@ -663,7 +674,7 @@ std_dat %>%
    #geom_hline(aes(yintercept=mean(bt_cpue)), linetype="dashed")+
    theme_cowplot()+
    labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
-   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+   theme(axis.text.x = element_text(angle = 45, hjust = 1)) #ok much better now that I fixed the averaging error
  #confidene intervals are still HUGE. And the values are pretty low.
  #should I NOT be averaging the standard error?
  #oh of course the standard error was lower before. IT was only predicted/fit to one vessel, rather than all of them
