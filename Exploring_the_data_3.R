@@ -432,6 +432,7 @@ std_dat %>%
  std_dat_ranef_lim<- expand.grid(Season.Ref = as.factor(unique(corr_spot_limited$Season.Ref)),
                              jdate = round(mean(corr_spot_limited$jdate),0),   #  unique(cpue_dat$Jdate)
                              ADFG.Number = 41228 #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+                      
  )
  pred_cpue_ranef_lim <- predict(gam_3_ranef_limited, std_dat_ranef_lim, type = "response", se = TRUE)
  
@@ -546,3 +547,12 @@ std_dat %>%
  #while I'd prefer not to deal with jdate:year,ADFG.Number:Year is problematic and needs to be dealt with'
  #see the literature
  #one method: predicting (weighted?) CPUE values for all vessel #'s then averaging?
+ 
+ model <- lm(CPUE_nom ~ Season.Ref * ADFG.Number, corr_spot_limited)
+ summary(model)
+ 
+ test_2 <-gam(log(CPUE_nom) ~ Season.Ref*ADFG.Number + s(jdate, k=4), data=corr_spot_limited)
+ summary(test_2)
+ 
+ #tyler advice: If you are having to create a prediction set to get to the standardized index, what I’ve done for vessel and other factors is use the mode. You could also expand your prediction set to use all the vessels and combinations of your other variables, and then average them with appropriate weighting (number of observations or something related to influence).
+ 
