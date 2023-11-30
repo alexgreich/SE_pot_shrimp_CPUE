@@ -555,4 +555,57 @@ std_dat %>%
  summary(test_2)
  
  #tyler advice: If you are having to create a prediction set to get to the standardized index, what I’ve done for vessel and other factors is use the mode. You could also expand your prediction set to use all the vessels and combinations of your other variables, and then average them with appropriate weighting (number of observations or something related to influence).
+ #so, my current chosen model is:  gam_3_ranef_limited. and gam_3_lim is another option (without the random effects)
+ ##first of all: should vessel ID be a fixed or random effect? Each CPUE observation is grouped by vessel ID. 
+ #https://stat.ethz.ch/R-manual/R-devel/library/mgcv/html/random.effects.html
+ #chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://web.pdx.edu/~newsomj/mlrclass/ho_randfixd.pdf
+ #For example if g is a factor then s(g,bs="re") produces a random coefficient for each level of g, with the random coefficients all modelled as i.i.d. normal.
+
+ ggplot(corr_spot_limited) + aes(x=ADFG.Number, y=log(CPUE_nom)) + geom_boxplot(aes(group=ADFG.Number))
+ summary(gam_3_ranef_limited)
+ summary(gam_3_lim)
+ 
+ BIC(gam_3_ranef_limited, gam_3_lim)
+ 
+ #let's try fixed effect first, for simplicity. Might do random effect later.
+ #so the model itself is fine. but the predication needs to change and average over everything. And also weight by... vessel freqency? by catch?
+ #first, let's make the big prediction dataset
+ new_dat_for_avg<- expand.grid(Season.Ref = as.factor(unique(corr_spot_limited$Season.Ref)),
+                                 jdate = round(mean(corr_spot_limited$jdate),0),   #  unique(cpue_dat$Jdate)... might need to expand and average this over all dates too
+                                 ADFG.Number = as.factor(unique(corr_spot_limited$ADFG.Number)) #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+                                 
+ )
+ pred_for_avg <- predict(gam_3_lim, new_dat_for_avg, type = "response", se = TRUE)
+ 
+ 
+ #second, we apply the weighted average
+ ##need to calculate vessel frequency...
+ 
+ new_dat_for_avg %>% 
+   mutate(fit = pred_for_avg$fit,
+          se = pred_for_avg$se.fit
+   ) -> new_dat_for_avg
+ 
+ new_dat_for_avg %>% #need to qc this!!!!!! Shit am I not git connected right now?
+   group_by(ADFG.Number) %>%
+   dplyr::mutate(ADFG.no.count = n()) %>%
+   ungroup() %>%
+   group_by(Season.Ref) %>%
+   dplyr::summarise(Weighted_avg_fit = weighted.mean(x=fit, w=ADFG.no.count), #maybe I'm grouping wrong. I dont want to summarize per vessel, I want to summarize over all vessels per year. Oh, I want to regroup by year for this second part
+                    Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) #%>% # hmm what do I want this to look like? see other predict table : View(std_dat_ranef_lim )
+  # ungroup()   #error above. Hmm. Maybe I need to weight in separate steps.
+ 
+ new_dat_for_avg %>% 
+   mutate(fit = pred_for_avg$fit,
+          se = pred_for_avg$se.fit,
+          upper = fit + (2 * se),
+          lower = fit - (2 * se),
+          bt_cpue = exp(fit),
+          bt_upper = exp(upper),
+          bt_lower = exp(lower),
+          bt_se = (bt_upper - bt_cpue) / 2, #,
+          bt_cv = bt_se/bt_cpue
+   ) -> new_dat_for_avg
+ 
+ 
  
