@@ -675,8 +675,14 @@ std_dat %>%
    theme_cowplot()+
    labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
    theme(axis.text.x = element_text(angle = 45, hjust = 1)) #ok much better now that I fixed the averaging error
- #confidene intervals are still HUGE. And the values are pretty low.
- #should I NOT be averaging the standard error?
- #oh of course the standard error was lower before. IT was only predicted/fit to one vessel, rather than all of them
+
  ###################################################################################
+ 
+ #fixed vs. random effects does not seem to be making a huge difference, unless I am doing the random effects wrong
+ 
+ #next: clean up this code a bit- and make the fixed effect graph your final one
+ ##also run for the up to date dataset (including season 22-23 - and see how that does)
+ #AND
+ #set up a clean import from OCEANAK- using oracle- wrangle in a way such that we calculate total pots before I take Ernest out (in case a fish ticket had multiple analysis areas)
+
  
