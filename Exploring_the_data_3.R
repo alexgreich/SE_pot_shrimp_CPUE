@@ -16,7 +16,7 @@ library(viridis)
 library(ggcorrplot)
 library(corrplot)
 library(lubridate)
-library(chron)
+#library(chron)
 library(mgcv)
 library(mgcViz)
 
@@ -630,7 +630,7 @@ std_dat %>%
  ############################################################################
  ##try this with the random effect model, for a more precise estimate??
  new_dat_for_avg<- expand.grid(Season.Ref = as.factor(unique(corr_spot_limited$Season.Ref)),
-                               jdate = round(mean(corr_spot_limited$jdate),0),   #  unique(cpue_dat$Jdate)... might need to expand and average this over all dates too
+                               jdate = round(mean(corr_spot_limited$jdate),0),   #  unique(corr_spot_limited$jdate)... might need to expand and average this over all dates too
                                ADFG.Number = as.factor(unique(corr_spot_limited$ADFG.Number)) #table(corr_spot$ADFG.Number) #52131 #56332 #41228
                                
  )
@@ -686,3 +686,33 @@ std_dat %>%
  #set up a clean import from OCEANAK- using oracle- wrangle in a way such that we calculate total pots before I take Ernest out (in case a fish ticket had multiple analysis areas)
 
  
+ ###########3
+ #diagnostics from 01-02 to 21-22
+ ############
+ 
+ #moxel
+ gam.check(gam_3_lim)
+ gam.check(gam_3_ranef_limited)
+
+ 
+ summary(gam_3_lim) #edf(esimated degrees of freedom?) on the smoothed term is 2.7
+ 
+ qq.gam(gam_3_lim)
+ 
+ plot(gam_3_lim, page = 1, shade = TRUE, resid = TRUE, all = TRUE)
+ #interpretations: residuals actually look pretty good. Normality looks ok (if slightkly off)
+ ##no residual patterns, and yes constant variance
+ ##https://r.qcbs.ca/workshop08/book-en/gam-model-checking.html#is-our-model-actually-normal
+ plot(gam_3_ranef_limited, page = 1, shade = TRUE, resid = TRUE, all = TRUE)
+gam.check(gam_3_lim)
+k.check(gam_3_lim)
+
+
+ 
+
+ 
+ #jdate over year interaction on catch??
+ ggplot(corr_spot_limited) + aes(x=Season.Ref, y=jdate, color=CPUE_nom) +geom_jitter() + scale_color_viridis()
+##not an issue in this model, maybe when we add 22-23 
+ ggplot(corr_spot) + aes(x=Season.Ref, y=jdate, color=CPUE_nom) +geom_jitter() + scale_color_viridis()
+###there we go. There's inteaction between year:jdate and cpue. sigh. How to deal with that? 
