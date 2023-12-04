@@ -370,6 +370,90 @@ std_dat %>%
    geom_errorbar(color="red", aes(x=Season.Ref, ymin=bt_lower, ymax=bt_upper), data=std_dat)
  #I've tested this with a few different reference vessels. REally seems to change, depending on my reference vessel. Is there a more robust way to do this?
 
+ #############3
+ #gam 3 mod with 22-23 data, and the average by boat.
+ #################
+ #not averaged by boat graph
+ ggplot(data=std_dat) + aes(x=Season.Ref, y=bt_cpue) + #Inconsistent results when ADFG.Number changes
+   geom_point(size=3)+
+   geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
+   geom_line(aes(group=1))+ #that works+
+   geom_hline(aes(yintercept=mean(bt_cpue)), linetype="dashed")+
+   theme_cowplot()+
+   labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1)) #why is uncertainty so large on 22-23? That's not that...useful
+ 
+ #averaged by boat code
+ new_dat_for_avg_mod3_2223<- expand.grid(Season.Ref = as.factor(unique(corr_spot$Season.Ref)),
+                               jdate = round(mean(corr_spot$jdate),0),   #  unique(cpue_dat$Jdate)... might need to expand and average this over all dates too
+                               ADFG.Number = as.factor(unique(corr_spot$ADFG.Number)) #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+                               
+ )
+ pred_for_avg_2223 <- predict(gam_3, new_dat_for_avg_mod3_2223, type = "response", se = TRUE)
+ 
+ new_dat_for_avg_mod3_2223 %>% 
+   mutate(fit = pred_for_avg_2223$fit,
+          se = pred_for_avg_2223$se.fit
+   ) -> new_dat_for_avg_mod3_2223
+ 
+ vessel_fish_ticket_count <- corr_spot %>% #counting # of times an individual vessel has a fish ticket
+   group_by(ADFG.Number) %>%
+   dplyr::summarise(ADFG.no.count = n()) %>%
+   ungroup()
+ 
+ new_dat_for_avg_mod3_2223 %>% 
+   # group_by(ADFG.Number) %>%
+   # dplyr::mutate(ADFG.no.count = n()) %>% #this is not right. Need to count how many times a vessel has a fish ticket in the OG data
+   # ungroup() %>%
+   left_join(vessel_fish_ticket_count) %>% #fixed it
+   group_by(Season.Ref) %>%
+   dplyr::summarise(Weighted_avg_fit = weighted.mean(x=fit, w=ADFG.no.count), 
+                    Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) -> new_dat_for_avg_mod3_2223_2
+ 
+ new_dat_for_avg_mod3_2223_2 %>% 
+   mutate(#fit = pred_for_avg$fit,
+     #se = pred_for_avg$se.fit,
+     upper = Weighted_avg_fit + (2 * Weighted_avg_se),
+     lower = Weighted_avg_fit - (2 * Weighted_avg_se),
+     bt_cpue = exp(Weighted_avg_fit),
+     bt_upper = exp(upper),
+     bt_lower = exp(lower),
+     bt_se = (bt_upper - bt_cpue) / 2, #,
+     bt_cv = bt_se/bt_cpue
+   ) -> new_dat_for_avg_mod3_2223_3
+ 
+ #averaged by boat graph
+ ggplot(new_dat_for_avg_mod3_2223_3) + aes(x=Season.Ref, y=bt_cpue) + 
+   geom_point(size=3)+
+   geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
+   geom_line(aes(group=1))+ #that works+
+   #geom_hline(aes(yintercept=mean(bt_cpue)), linetype="dashed")+
+   theme_cowplot()+
+   labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+ ###hmm but why is the standardized cpue for 22-23 so... imprecise? even agter all my boats are averaged. Oh. It's because I use the wrong dats to predict
+ ##try the model without jdate, then. Myabe add vessel #.
+ 
+ ########################################
+ ##12/4/23
+ #jdate is causing uncertainty in 22-23? try model without jdate
+ 
+ mod_new <- lm(log(CPUE_nom) ~ vessel_count + Season.Ref + ADFG.Number, data=corr_spot) #issues with singularities?
+ summary(mod_new)
+ 
+ mod_new_2 <- lm(log(CPUE_nom) ~  Season.Ref + ADFG.Number, data=corr_spot)
+ summary(mod_new)
+ 
+ mod_new_3 <- lm(log(CPUE_nom) ~  vessel_count + Season.Ref, data=corr_spot)
+ summary(mod_new_3)
+ 
+ mod_new_4 <- lm(log(CPUE_nom) ~  vessel_count + ADFG.Number + Season.Ref, data=corr_spot)
+ summary(mod_new_4)
+ 
+ mod_null <- lm(log(CPUE_nom) ~  ADFG.Number, data=corr_spot)
+ summary(mod_null)
+ ##########################################################
+ 
 
 #################
  #ranef mod
@@ -741,3 +825,11 @@ k.check(gam_3_lim)
 ##not an issue in this model, maybe when we add 22-23 
  ggplot(corr_spot) + aes(x=Season.Ref, y=jdate, color=CPUE_nom) +geom_jitter() + scale_color_viridis()
 ###there we go. There's inteaction between year:jdate and cpue. sigh. How to deal with that? 
+ 
+ 
+ 
+ ####################333#######################################
+ #12/04/23
+ #dealing with the huge uncertainty with 22-23 CPUE std.
+ #what if I add another factor, before/after the season switch?
+ #############################################################
