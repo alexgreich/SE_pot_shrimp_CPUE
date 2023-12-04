@@ -11,6 +11,10 @@
 ##1. I am concerned that jdate will no longer be useful for cpue standardization when both the old season (fall) and the new season (spring) are used in the model
 ##2 I am worried that the previously used method is an over estimation of cpue for areas (or maybe years) of higher fishing success, like Ernest sound.
 
+#answers.
+##the reason why my uncertainty is so high is becuse I chose a date wayyyy outside the prediction range for 22-23.
+####so then, WOULD IT BE LEGIT TO SELECT A DIFFERENT JDATE FOR 22-23 THAN FOR EVERTTHING ELSE? OR SHOULD i AVERAGE ACROSS ALL JDATES
+####I'm leaning towads the former, but it will have to be  a legit scientific method
 #####################
 
 #############################
@@ -455,11 +459,14 @@ std_dat %>%
  ##########################################################
  
 
+ 
+ 
+ 
 #################
  #ranef mod
  ############################
  std_dat_ranef<- expand.grid(Season.Ref = as.factor(unique(corr_spot$Season.Ref)),
-                       jdate = round(mean(corr_spot$jdate),0),   #  unique(cpue_dat$Jdate)
+                       jdate =  round(mean(corr_spot$jdate),0), #139  #  unique(cpue_dat$Jdate)
                        ADFG.Number = 52131 #table(corr_spot$ADFG.Number) #52131 #56332 #41228
  )
  pred_cpue_ranef <- predict(gam_3_ranef, std_dat_ranef, type = "response", se = TRUE)
@@ -512,6 +519,12 @@ std_dat %>%
  ############33
  #look more closely at the resdual and indivudal graphs.
  #what does the jdate graph look like?
+ 
+ 
+ #############33
+ #ranef with averaged vessels.
+ 
+ 
  
 ###################################
 #replicating max's graphs
@@ -833,3 +846,24 @@ k.check(gam_3_lim)
  #dealing with the huge uncertainty with 22-23 CPUE std.
  #what if I add another factor, before/after the season switch?
  #############################################################
+ names(corr_spot)
+ 
+ dummy_table <- expand.grid(Season.Ref = unique(corr_spot_limited$Season.Ref),
+                            Season.Change = "before")
+ dummy_2 <- data.frame(Season.Ref = "22-23", Season.Change="after")
+ 
+ dummy_table <- rbind(dummy_table, dummy_2)
+ 
+ corr_spot <- left_join(corr_spot, dummy_table)
+ View(corr_spot)
+
+ 
+ #now model with new covariate
+ mod_glob_s <-  gam(log(CPUE_nom) ~ Season.Ref + ADFG.Number + s(Season.Change, bs="re") + s(jdate, k=4), data=corr_spot) #let's try random effect before/after
+ mod_s <- gam(log(CPUE_nom) ~ Season.Ref + ADFG.Number + Season.Change + s(jdate, k=4), data=corr_spot) #season change is not a random effect her
+BIC(mod_glob_s, mod_s) #makes absolutely no differnce.
+
+summary(mod_glob_s)
+summary(mod_s)
+#says before/after does not matter...
+ 
