@@ -438,6 +438,82 @@ std_dat %>%
  ###hmm but why is the standardized cpue for 22-23 so... imprecise? even agter all my boats are averaged. Oh. It's because I use the wrong dats to predict
 
  
+ #################################################################33##################################################
+ #12/05/23- cherry pick jdate during setup so that the uncertainty won't be huge for the 22-23 prediction (std cpue)
+ #####################################################################################################################
+ ##using the model: gam_3; using the dataset: corr_spot
+ 
+ #predict standardized cpue with averaged vessel ID and cherry-pciked jdate
+ #set ip the dataset for prediction
+ corr_spot_a <- corr_spot %>% filter(Season.Ref!="22-23")#everything but the new season
+ corr_spot_b <- corr_spot %>% filter(Season.Ref == "22-23") #just the new season
+ 
+ dat_for_avg_jdate_manip<- expand.grid(Season.Ref = as.factor(unique(corr_spot$Season.Ref)),
+                                         jdate = c(round(mean(corr_spot_a$jdate),0),round(mean(corr_spot_b$jdate),0)),   #  unique(cpue_dat$Jdate)... might need to expand and average this over all dates too
+                                         ADFG.Number = as.factor(unique(corr_spot$ADFG.Number)) #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+                                         
+ )
+ 
+ #get the predicted results (that still need to be averaged/othersise manipulated)
+ pred_for_avg_jdate_manip <- predict(gam_3, dat_for_avg_jdate_manip, type = "response", se = TRUE)
+ 
+ #extract predicted values and put into the data frame
+ dat_for_avg_jdate_manip %>% 
+   mutate(fit = pred_for_avg_jdate_manip$fit,
+          se = pred_for_avg_jdate_manip$se.fit
+   ) -> dat_for_avg_jdate_manip
+ 
+ #counting # of times an individual vessel has a fish ticket
+ vessel_fish_ticket_count <- corr_spot %>% 
+   group_by(ADFG.Number) %>%
+   dplyr::summarise(ADFG.no.count = n()) %>%
+   ungroup()
+ 
+ #average by vessel
+ dat_for_avg_jdate_manip %>% 
+   left_join(vessel_fish_ticket_count) %>% 
+   group_by(Season.Ref, jdate) %>% #but keep thing separate for the early (22-23; spring) and late(01-02->21-22; fall)
+   dplyr::summarise(Weighted_avg_fit = weighted.mean(x=fit, w=ADFG.no.count), 
+                    Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) -> dat_for_avg_jdate_manip_2
+ 
+ 
+ dat_for_avg_jdate_manip_2_a <- dat_for_avg_jdate_manip_2 %>% #the value for seasons 01-02 -> 21-22 and correct jdate
+   filter(Season.Ref != "22-23",
+          jdate==round(mean(corr_spot_a$jdate),0))
+ 
+ dat_for_avg_jdate_manip_2_b <- dat_for_avg_jdate_manip_2 %>% #the value for season22-23 and the correct jdate
+   filter(jdate== round(mean(corr_spot_b$jdate),0),
+          Season.Ref == "22-23")
+ 
+ #combine dataframes for the standardized cpue by year
+ dat_for_avg_jdate_manip_3 <- rbind(dat_for_avg_jdate_manip_2_a, dat_for_avg_jdate_manip_2_b) #the se looks a little high
+ ##check to make sure i didnt code inefficiently. I sense that I missed something/did somethng extra.
+ 
+ #get new values
+ dat_for_avg_jdate_manip_3 %>% 
+   mutate(#fit = pred_for_avg$fit,
+     #se = pred_for_avg$se.fit,
+     upper = Weighted_avg_fit + (2 * Weighted_avg_se),
+     lower = Weighted_avg_fit - (2 * Weighted_avg_se),
+     bt_cpue = exp(Weighted_avg_fit),
+     bt_upper = exp(upper),
+     bt_lower = exp(lower),
+     bt_se = (bt_upper - bt_cpue) / 2, #,
+     bt_cv = bt_se/bt_cpue
+   ) -> dat_for_avg_jdate_manip_4
+ 
+ #graph that.
+ ggplot(dat_for_avg_jdate_manip_4) + aes(x=Season.Ref, y=bt_cpue) + 
+     geom_point(size=3)+
+     geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
+     geom_line(aes(group=1))+ #that works+
+     #geom_hline(aes(yintercept=mean(bt_cpue)), linetype="dashed")+
+     theme_cowplot()+
+     labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
+     theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+ ##do CI's look a little too large?
+ 
+ ###########################################
  ########################################
  ##12/4/23
  #jdate is causing uncertainty in 22-23? try model without jdate
@@ -706,7 +782,7 @@ std_dat %>%
      labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound, vessel weighted average method" )+
      theme(axis.text.x = element_text(angle = 45, hjust = 1)) )
  
- z/b
+ z/b #averaged by boat, with comparison graph (to match Max's graph) seasons 01-02 - > 22-23
  
  #################################
 ###model residual examination/model diagnostics
@@ -918,4 +994,4 @@ BIC(mod_glob_s, mod_s) #makes absolutely no differnce.
 summary(mod_glob_s)
 summary(mod_s)
 #says before/after does not matter...
- 
+
