@@ -511,7 +511,7 @@ std_dat %>%
      theme_cowplot()+
      labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
      theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
- ##do CI's look a little too large?
+ ##do CI's look a little too large? No?
  
  ###########################################
  ########################################
