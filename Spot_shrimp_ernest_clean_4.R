@@ -427,16 +427,16 @@ std_dat %>%
    ) -> new_dat_for_avg_mod3_2223_3
  
  #averaged by boat graph
- ggplot(new_dat_for_avg_mod3_2223_3) + aes(x=Season.Ref, y=bt_cpue) + 
+(y<- ggplot(new_dat_for_avg_mod3_2223_3) + aes(x=Season.Ref, y=bt_cpue) + 
    geom_point(size=3)+
    geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
    geom_line(aes(group=1))+ #that works+
    #geom_hline(aes(yintercept=mean(bt_cpue)), linetype="dashed")+
    theme_cowplot()+
    labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound" )+
-   theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+   theme(axis.text.x = element_text(angle = 45, hjust = 1)) )
  ###hmm but why is the standardized cpue for 22-23 so... imprecise? even agter all my boats are averaged. Oh. It's because I use the wrong dats to predict
- ##try the model without jdate, then. Myabe add vessel #.
+
  
  ########################################
  ##12/4/23
@@ -654,7 +654,59 @@ std_dat %>%
  #save the plot
  ggsave("draft_std_cpue_ernest.png",plot=ab, width=7, height=8)
   
-  
+######################  
+ ###aside: relplicaet max's graph from 01-02 to 21-22 with the averaging method.
+ #######################
+ std_dat_avg_lim<- expand.grid(Season.Ref = as.factor(unique(corr_spot_limited$Season.Ref)),
+                                 jdate = round(mean(corr_spot_limited$jdate),0),   #  unique(cpue_dat$Jdate)
+                                 ADFG.Number = unique(corr_spot_limited$ADFG.Number) #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+                                 
+ )
+ pred_cpue_avg_lim <- predict(gam_3_lim, std_dat_ranef_lim, type = "response", se = TRUE)
+ 
+ #average
+ std_dat_avg_lim %>% 
+   mutate(fit = pred_cpue_avg_lim$fit,
+          se = pred_cpue_avg_lim$se.fit
+   ) -> std_dat_avg_lim
+ 
+ vessel_fish_ticket_count <- corr_spot_limited %>% #counting # of times an individual vessel has a fish ticket
+   group_by(ADFG.Number) %>%
+   dplyr::summarise(ADFG.no.count = n()) %>%
+   ungroup()
+ 
+ std_dat_avg_lim %>% 
+   # group_by(ADFG.Number) %>%
+   # dplyr::mutate(ADFG.no.count = n()) %>% #this is not right. Need to count how many times a vessel has a fish ticket in the OG data
+   # ungroup() %>%
+   left_join(vessel_fish_ticket_count) %>% #fixed it
+   group_by(Season.Ref) %>%
+   dplyr::summarise(Weighted_avg_fit = weighted.mean(x=fit, w=ADFG.no.count), 
+                    Weighted_avg_se = weighted.mean(x=se, w=ADFG.no.count)) -> std_dat_avg_lim_2
+ 
+ std_dat_avg_lim_2 %>% 
+   mutate(#fit = pred_for_avg$fit,
+     #se = pred_for_avg$se.fit,
+     upper = Weighted_avg_fit + (2 * Weighted_avg_se),
+     lower = Weighted_avg_fit - (2 * Weighted_avg_se),
+     bt_cpue = exp(Weighted_avg_fit),
+     bt_upper = exp(upper),
+     bt_lower = exp(lower),
+     bt_se = (bt_upper - bt_cpue) / 2, #,
+     bt_cv = bt_se/bt_cpue
+   ) -> std_dat_avg_lim_3
+ 
+ #averaged by boat graph
+ (z<- ggplot(std_dat_avg_lim_3) + aes(x=Season.Ref, y=bt_cpue) + 
+     geom_point(size=3)+
+     geom_errorbar( aes(ymin=bt_lower, ymax=bt_upper)) +
+     geom_line(aes(group=1))+ 
+     #geom_hline(aes(yintercept=mean(bt_cpue)), linetype="dashed")+
+     theme_cowplot()+
+     labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "Upper Ernest Sound, vessel weighted average method" )+
+     theme(axis.text.x = element_text(angle = 45, hjust = 1)) )
+ 
+ z/b
  
  #################################
 ###model residual examination/model diagnostics
