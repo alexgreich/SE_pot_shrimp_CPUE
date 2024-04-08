@@ -61,9 +61,9 @@ big_shrimp_focus_years <- big_shrimp_focus_years %>%
 
 sum_shrimp_focus_years <- big_shrimp_focus_years %>%
   mutate(Pot.Lifts = replace_na(Pot.Lifts, 0)) %>%
-  group_by(Fish.Ticket.Number, Species.Code, Stat.Area) %>% #also group by stat area for analysis areas with multiple stat areas.
+  group_by(Fish.Ticket.Number, Species.Code, Stat.Area) %>% #also group by stat area for analysis areas with multiple stat areas. OOH. SHOULD I GROUP BY ANALYSIS AREA ALSO?? I THHINK MAYBE SO!
   summarise(
-    total_weight = sum(Whole.Weight..sum.),
+    total_weight = sum(Whole.Weight..sum.), #WHAT THE HELL AM i DOING HERE, AND IS IT RIGHT?? IS THIS OK TO DO BEFORE FILTERING OUT OTHER SHRIMP SPECIES??
     max_pots = max(Pot.Lifts),
     ADFG.Number = max(ADFG.Number),
     Season.Ref=max(Season.Ref),
