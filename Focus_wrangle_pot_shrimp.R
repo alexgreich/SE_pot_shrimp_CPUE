@@ -74,6 +74,13 @@ unique(all_shrimp_foucs_years_2$sub_district)
 all_shrimp_w_analysis_area <- add_analysis_area(all_shrimp_foucs_years_2)
 #IT worked!!
 #View(all_shrimp_w_analysis_area)
-#ok so I need another column called sub_district or add an analysis area column. Back to oceanak we go.
+unique(all_shrimp_w_analysis_area$Analysis.Area)
+#some still have NA's, idk why.
 
-#ohh. might need to filter for shrimp first??
+#NOW filter by district
+#start with 107 (upper ernest sound is 107-20)
+
+#DISTRICT 107
+##(filter filter)
+
+
