@@ -149,16 +149,71 @@ str(sum_spot_shrimp_ernest) #Fixed it. set analysis area to upper ernest sound
 #str(na.omit(Upper_ernest_sound_d_4))
 
 ###########################################################################
-#make this a fucntion
+#make this a Function
 
-#wrangle_spot_shrimp_by_district <- function(data, analysis_area){
+#before adding data to this function, the data (dat) needs to be combined and wrangled to add district and Analysis.Area columns
+##Can make that its own function, I guess, but only needs to be done once.
 
+#dat has these columns and is from years 01-02 to current (I think)
 
-#}
+wrangle.spot.shrimp.by.district <- function(dat, distr){  
+  
+  #test
+  dat <- all_shrimp_w_analysis_area
+  distr <- 107
+  
+  #filter for the district of interest
+  df_1 <- dat %>% filter(district == distr)
+  
+  
+  
+  
+  #vessel count in the area of fishing during that year. SHOULD I DO THIS AFTER FILTERING FOR SPOT SHRIMP?? Perhaps.
+  df_2 <- df_1 %>% 
+    group_by(Season.Ref, Analysis.Area, Species.Code) %>% #grouping by season (year) AND.. fish ticket #AND... species??
+    mutate(vessel_count = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
+    ungroup() #ungroup
+  
+  #unique(df_2$Species.Code) #what is 962?
 
-#wrangle_spot_shrimp_by_analysis_area <- function(data, district){}
+  #ca
+  df_3 <- df_2 %>%
+    mutate(Pot.Lifts = replace_na(Pot.Lifts, 0)) %>% ##where there are NA's, put 0
+    group_by(Fish.Ticket.Number, Species.Code, Analysis.Area) %>% #are these the right groupings? should I group by season(year) instead of fish ticket? No, because I want max pots per boat
+    summarise(
+      total_weight = sum(Whole.Weight..sum.), #total weight for each species, fish ticket, and analysis area (hopefully they ddidnt group coons and spot)
+      max_pots = max(Pot.Lifts), #max pots for each species, fish ticket, and analysis area
+      ADFG.Number = max(ADFG.Number), #I'm just saying I want this in the resulting df
+      Season.Ref=max(Season.Ref), #I'm just saying I want this in the resulting df
+      Vessel.Name = max(Vessel.Name), #I'm just saying I want this in the resulting df
+      DOL.Month= max(DFB.Month), #I'm just saying I want this in the resulting df
+      Stat.Week=max(Stat.Week), #I'm just saying I want this in the resulting df
+      Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
+      Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
+      vessel_count=max(vessel_count) #I'm just saying I want this in the resulting df
+    ) %>%
+    ungroup() 
+  
+  #calculating max pots, as across species they only lsit one pot sometimes
+  max_pots_total <- df_3 %>% #get # pots fpr each fish ticket
+    group_by(Fish.Ticket.Number) %>%
+    summarise(
+      max_pots_2 = max(max_pots)
+    )%>%
+    ungroup()
+  
+  df_4 <- df_3 %>% #this is where NA's appear for the season.ref code. need to figure out why.
+    #filter(Species.Code == 965) %>%
+    right_join(max_pots_total) %>% #probs has to do with the join, the NA's that is
+    filter(Species.Code == 965) %>% #switched this over here, no more NAs'
+    select(-max_pots)
 
+}
 
+##wrangle_spot_shrimp_by_analysis_area <- function(data, district){}
+###nah, don't do this one
+
+#View(df_3)
 
 
 
