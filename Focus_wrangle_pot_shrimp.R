@@ -3,6 +3,9 @@
 ##I'll explore different data wrangling options, see if they are the same.
 
 library(tidyverse)
+library(lubridate)
+
+#source("analysisareas_function.R") #mind the location of this function
 
 
 
@@ -82,5 +85,80 @@ unique(all_shrimp_w_analysis_area$Analysis.Area)
 
 #DISTRICT 107
 ##(filter filter)
+##follow the filter pathway, mind the instructions in the word doc please.
+
+Upp_ern <- all_shrimp_w_analysis_area %>% filter(Analysis.Area == "Upper Ernest Sound") # filter(district ==107) #upper ernest sound
+
+#vessel count
+Upp_ern_2 <- Upp_ern %>% 
+  group_by(Season.Ref) %>% #grouping by season (year)
+  mutate(vessel_count = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number)
+  ungroup() #ungroup
+
+Upper_ernest_sound_d <- Upp_ern_2 %>%
+  mutate(Pot.Lifts = replace_na(Pot.Lifts, 0)) %>% ##below: upper ernest sound.. only has one stat areas
+  group_by(Fish.Ticket.Number, Species.Code) %>% #, Stat.Area) %>% #also group by stat area for analysis areas with multiple stat areas. OOH. SHOULD I GROUP BY ANALYSIS AREA ALSO?? I THHINK MAYBE SO!
+  ##adding Stat.Area matters and I do NOT know why for upper ernest
+  summarise(
+    total_weight = sum(Whole.Weight..sum.), #WHAT THE HELL AM i DOING HERE, AND IS IT RIGHT?? IS THIS OK TO DO BEFORE FILTERING OUT OTHER SHRIMP SPECIES??
+    max_pots = max(Pot.Lifts),
+    ADFG.Number = max(ADFG.Number),
+    Season.Ref=max(Season.Ref),
+    Vessel.Name = max(Vessel.Name),
+    DOL.Month= max(DFB.Month),
+    Stat.Week=max(Stat.Week), 
+    Batch.Year=max(Batch.Year), #add Event date, date of landing, or vessel count here? #change from V1 ... vessel count is a continuous variable (integer... GAM time?)
+    Event.Date=max(Date.of.Landing),
+    vessel_count=max(vessel_count) #that should do it.
+  ) %>%
+  ungroup() #the upper ernest sound, filtered by district way
+
+#View(Upper_ernest_sound_d)
+
+
+max_pots_total <- Upper_ernest_sound_d %>% #get # pots fpr each fish ticket
+  group_by(Fish.Ticket.Number) %>%
+  summarise(
+    max_pots_2 = max(max_pots)
+  )%>%
+  ungroup()
+
+Upper_ernest_sound_d_2 <- Upper_ernest_sound_d %>% 
+  right_join(max_pots_total) %>% 
+  filter(Species.Code == 965) %>%
+  select(-max_pots)
+
+#View(Upper_ernest_sound_d_2)
+
+#get cpue
+Upper_ernest_sound_d_3 <- Upper_ernest_sound_d_2 %>%
+  filter(max_pots_2 != 0) %>%
+  mutate(CPUE_nom = total_weight/max_pots_2)
+
+#fix event date to not be weird
+Upper_ernest_sound_d_3$Event.Date <- as.Date(Upper_ernest_sound_d_3$Event.Date)
+
+#wrangle jdate
+Upper_ernest_sound_d_4 <-  Upper_ernest_sound_d_3 %>%
+  mutate(landing_date = parse_date_time(Event.Date,c("%Y/%m/%d"))) %>%
+  mutate(jdate = as.numeric(format(landing_date,"%j"))) #nailed it!!!
+
+#compare this way to the other way.
+str(Upper_ernest_sound_d_4) #has 3 more rows and I dont know why. Oh duh. becasuse it contains more fishing years...
+str(sum_spot_shrimp_ernest) #Fixed it. set analysis area to upper ernest sound
+#str(na.omit(Upper_ernest_sound_d_4))
+
+###########################################################################
+#make this a fucntion
+
+#wrangle_spot_shrimp_by_district <- function(data, analysis_area){
+
+
+#}
+
+#wrangle_spot_shrimp_by_analysis_area <- function(data, district){}
+
+
+
 
 
