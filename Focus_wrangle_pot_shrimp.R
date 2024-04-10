@@ -207,6 +207,24 @@ wrangle.spot.shrimp.by.district <- function(dat, distr){
     right_join(max_pots_total) %>% #probs has to do with the join, the NA's that is
     filter(Species.Code == 965) %>% #switched this over here, no more NAs'
     select(-max_pots)
+  
+  #calc nomimal cpue
+  #calculate nominal CPUE
+  df_5 <- df_4 %>%
+    filter(max_pots_2 != 0) %>%
+    mutate(CPUE_nom = total_weight/max_pots_2)
+  
+  #fix event date to not be weird
+  df_5$Event.Date <- as.Date(df_5$Event.Date)
+  
+  #wrangle jdate
+  df_6 <-  df_5 %>%
+    mutate(landing_date = parse_date_time(Event.Date,c("%Y/%m/%d"))) %>%
+    mutate(jdate = as.numeric(format(landing_date,"%j"))) #nailed it!!!
+  
+  #ok, that should do it, QC last 3 blocks please.
+  
+  return(df_6)
 
 }
 
