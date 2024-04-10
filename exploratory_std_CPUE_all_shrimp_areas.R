@@ -68,6 +68,12 @@ unique(all_shrimp_w_analysis_area$district) #what do all of the districts corres
 #102 112 115 101 103 113 111 107 106 110 108 116 183 104 105 109 114 181
 dist_107_pot_shrimp <-  wrangle.spot.shrimp.by.district(all_shrimp_w_analysis_area, 107)
 
+dist_101_pot_shrimp <- wrangle.spot.shrimp.by.district(all_shrimp_w_analysis_area, 101)
+
+
+dist_15_coon_shrimp <- wrangle.coonstripe.shrimp.by.district(all_shrimp_w_analysis_area, 115)
+
+
 
 
 ###############################################################################
@@ -75,5 +81,6 @@ dist_107_pot_shrimp <-  wrangle.spot.shrimp.by.district(all_shrimp_w_analysis_ar
 
 
 #QUESTIONS
-###which districts/areas use coons insetad of spot shrimp for stock assessment purposes
+###which districts/areas use coons insetad of spot shrimp for stock assessment purposes #district 15 uses coons. #is this dist.... 115?
 ###what is the VALUE column in the raw data?
+###what is the spot shrimp and coon code? Spot is 965, coon is 964

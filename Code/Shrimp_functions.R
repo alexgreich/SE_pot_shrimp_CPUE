@@ -84,8 +84,8 @@ add_analysis_area <- function(df) {
 wrangle.spot.shrimp.by.district <- function(dat, distr){  
   
   #test
-  dat <- all_shrimp_w_analysis_area
-  distr <- 107
+  #dat <- all_shrimp_w_analysis_area
+  #distr <- 107
   
   #filter for the district of interest
   df_1 <- dat %>% filter(district == distr)
@@ -158,8 +158,8 @@ wrangle.spot.shrimp.by.district <- function(dat, distr){
 wrangle.coonstripe.shrimp.by.district <- function(dat, distr){  
   
   #test
-  dat <- all_shrimp_w_analysis_area
-  distr <- 107
+ # dat <- all_shrimp_w_analysis_area
+  #distr <- 107
   
   #filter for the district of interest
   df_1 <- dat %>% filter(district == distr)
