@@ -2,6 +2,7 @@
 #functions for the pot shrimp CPUE standardization
 
 library(tidyverse)
+library(lubridate)
 
 #a function for adding the analysis area name to the df
 ##thanks Max for writing!!
