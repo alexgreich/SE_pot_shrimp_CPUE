@@ -228,10 +228,11 @@ wrangle.spot.shrimp.by.district <- function(dat, distr){
 
 }
 
-##wrangle_spot_shrimp_by_analysis_area <- function(data, district){}
-###nah, don't do this one
 
-#View(df_3)
 
+#next do this for every district
+##as a for loop? as individuals?
+##and make a functions R file for this and and analysis areas function. Keep your functions in one place!
+#back to explotary_CPUE_all_shrimp_areas now, since the focus wrangle is complete?
 
 
