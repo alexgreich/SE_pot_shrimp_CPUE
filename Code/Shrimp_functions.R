@@ -135,8 +135,8 @@ wrangle.spot.shrimp.by.district <- function(dat, distr){
   #calculating max pots, as across species they only lsit one pot sometimes
   max_pots_total <- df_3 %>% #get # pots fpr each fish ticket, Ccombines species
     group_by(Fish.Ticket.Number) %>%
-    summarise(
-      max_pots_2 = max(max_pots) #takes the max of pots. This will acoount for: sitautions where pots are replicated, and situations where pots are one entry, 0 0. 
+    summarise( #if I needed to account for people correctly partitioning shrimp effort (ex 4 pots to spot and 2 pots to coon, I can add an if statement for if the pot lifts in a fish ticket are unequal and do not contain 0. And... do soemthing with that if statment)
+      max_pots_2 = max(max_pots) #takes the max of pots. This will acoount for: sitautions where pots are replicated (ex: 4,4,4), and situations where pots are one entry, (ex: 4 0 0) Does not currently account for when people actually partitioned their effort to spot vs. coon.
       ##whatif pots were already proportioned appropriately tho? Does it account for that?
     )%>%
     ungroup()
@@ -211,8 +211,8 @@ wrangle.coonstripe.shrimp.by.district <- function(dat, distr){
   #calculating max pots, as across species they only lsit one pot sometimes
   max_pots_total <- df_3 %>% #get # pots fpr each fish ticket
     group_by(Fish.Ticket.Number) %>%
-    summarise(
-      max_pots_2 = max(max_pots)
+    summarise( #if I needed to account for people correctly partitioning shrimp effort (ex 4 pots to spot and 2 pots to coon, I can add an if statement for if the pot lifts in a fish ticket are unequal and do not contain 0. And... do soemthing with that if statment)
+      max_pots_2 = max(max_pots) #the way I wrangled, this will account for 
     )%>%
     ungroup()
   
