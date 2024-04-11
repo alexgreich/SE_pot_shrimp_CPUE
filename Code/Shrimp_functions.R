@@ -1,4 +1,9 @@
 ##
+#TO DO
+#so it turns out that managment unit and district are not the same thing. And I'll want to make a function to filter for MGMT UNIT, not district.
+###see table on page 17 and 18 of the 2022 pot shrimp assessment report
+#####make function after analysis area called add.mgmt.area
+##
 #functions for the pot shrimp CPUE standardization
 
 library(tidyverse)
@@ -6,7 +11,7 @@ library(lubridate)
 
 #a function for adding the analysis area name to the df
 ##thanks Max for writing!!
-add_analysis_area <- function(df) {
+add.analysis.area <- function(df) {
   df <- df %>%
     mutate(Analysis.Area = case_when(
       district == 101 & sub_district %in% c(85, 90, 95) ~ "West Behm Canal",
@@ -77,10 +82,18 @@ add_analysis_area <- function(df) {
 }
 
 
+
+#add managment unit function
+add.mgmt.unit <- function(){
+  
+  
+}
+
 #prep for std cpue analysis. 
 ##will give you wrangled data (df) and nominal CPUE by shrimp district
 ###can (manually) filter further to get analysis areas
 ###kind of needs a smooth throuhg (of hashtags) and a QC
+####CHANGE TO BY MGMT UNIT!! (WILL NOT BE HARD)
 wrangle.spot.shrimp.by.district <- function(dat, distr){  
   
   #test
@@ -107,7 +120,7 @@ wrangle.spot.shrimp.by.district <- function(dat, distr){
     group_by(Fish.Ticket.Number, Species.Code, Analysis.Area) %>% #are these the right groupings? should I group by season(year) instead of fish ticket? No, because I want max pots per boat
     summarise(
       total_weight = sum(Whole.Weight..sum.), #total weight for each species, fish ticket, and analysis area (hopefully they ddidnt group coons and spot)
-      max_pots = max(Pot.Lifts), #max pots for each species, fish ticket, and analysis area
+      max_pots = max(Pot.Lifts), #max pots for each species, fish ticket, and analysis area #MIGHT BE AN ERROR HERE. WHAT IF THE LINE IS LISTED FOR A DIFF SPECIS?
       ADFG.Number = max(ADFG.Number), #I'm just saying I want this in the resulting df
       Season.Ref=max(Season.Ref), #I'm just saying I want this in the resulting df
       Vessel.Name = max(Vessel.Name), #I'm just saying I want this in the resulting df
@@ -120,10 +133,11 @@ wrangle.spot.shrimp.by.district <- function(dat, distr){
     ungroup() 
   
   #calculating max pots, as across species they only lsit one pot sometimes
-  max_pots_total <- df_3 %>% #get # pots fpr each fish ticket
+  max_pots_total <- df_3 %>% #get # pots fpr each fish ticket, Ccombines species
     group_by(Fish.Ticket.Number) %>%
     summarise(
-      max_pots_2 = max(max_pots)
+      max_pots_2 = max(max_pots) #takes the max of pots. This will acoount for: sitautions where pots are replicated, and situations where pots are one entry, 0 0. 
+      ##whatif pots were already proportioned appropriately tho? Does it account for that?
     )%>%
     ungroup()
   
@@ -155,6 +169,7 @@ wrangle.spot.shrimp.by.district <- function(dat, distr){
 
 #same but for coons
 ##I forget which district/analysis area uses coons instead of spot shrimp
+####CHANGE TO BY MGMT UNIT!! (WILL NOT BE HARD)
 wrangle.coonstripe.shrimp.by.district <- function(dat, distr){  
   
   #test

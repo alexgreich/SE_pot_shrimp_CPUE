@@ -49,13 +49,15 @@ unique(all_shrimp_focus_years$Species.Code) #multiple species. I'll want to dele
  #                                                   Item.Number, 
   #                                                  Stat.Area, Whole.Weight..sum., Pot.Lifts, Species.Code, Batch.Year) #what is item number? the item per fish ticket
 
-
+#add analysis area names
+##first need to wrangle so the function will work
 all_shrimp_foucs_years_2 <- all_shrimp_focus_years %>% rename(district = District.Number)#, sub_district = Stat.Area) #renamed district to fit in the function
 all_shrimp_foucs_years_2$sub_district <- substr(all_shrimp_foucs_years_2$Stat.Area, 4,5)
 
+all_shrimp_w_analysis_area <- add.analysis.area(all_shrimp_foucs_years_2)
 
-all_shrimp_w_analysis_area <- add_analysis_area(all_shrimp_foucs_years_2)
-#IT worked!!
+#add managment area
+
 
 ##################################################################################
 #functions (see Tyler's AIGKC code for inspiration)
@@ -63,14 +65,20 @@ all_shrimp_w_analysis_area <- add_analysis_area(all_shrimp_foucs_years_2)
 #wrangle with functions
 source("Code/Shrimp_functions.R")
 
+#IMPORTANT: SOME ENTRIES HAVE POT LIFTS REPLICATED PER ROW. DOES MY FILTERING ACCOMIDATE THAT? WE DO NOT WANT TO SUM THESE
+
 #wragnle spot shrimp by district
-unique(all_shrimp_w_analysis_area$district) #what do all of the districts correspond to??
+unique(all_shrimp_w_analysis_area$district) 
+
+#what do all of the districts correspond to??
 #102 112 115 101 103 113 111 107 106 110 108 116 183 104 105 109 114 181
+
+
 dist_107_pot_shrimp <-  wrangle.spot.shrimp.by.district(all_shrimp_w_analysis_area, 107)
 
 dist_101_pot_shrimp <- wrangle.spot.shrimp.by.district(all_shrimp_w_analysis_area, 101)
 
-
+#the only coon district
 dist_15_coon_shrimp <- wrangle.coonstripe.shrimp.by.district(all_shrimp_w_analysis_area, 115)
 
 
