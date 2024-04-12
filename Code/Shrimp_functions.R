@@ -1,7 +1,7 @@
 ##
 #TO DO
 #so it turns out that managment unit and district are not the same thing. And I'll want to make a function to filter for MGMT UNIT, not district.
-###see table on page 17 and 18 of the 2022 pot shrimp assessment report
+ 
 
 #also see max email for:  WEIGHTS. ADD WEIGHTS FOE EARCH ANALYSIS AREA
 ##I am unsure about weighing the areas tho. Doesnt CPUE... weigh itself??
@@ -89,13 +89,13 @@ add.analysis.area <- function(df) {
 
 #add managment unit function aka fisheries
 add.mgmt.unit <- function(df){ #NEEDS trial run
-  df2 <- df %>% Management_unit = case_when(
+  df2 <- df %>% mutate(Management_unit = case_when(
     district == 101 ~ "District 1", #only works if we want everthting in district 1 #maybe check if district one has all the necessary subdistricts/areas (and no extras)
     district == 102 ~ "District 2",
     district == 103 & sub_district %in% c(25, 11, 15, 21, 23, 30, 40) ~ "Section 3A",
     district == 103 & sub_district %in% c(50, 60, 70, 80, 90) ~ "Section 3B",
     district == 104 ~ "District 4",
-    distrcit == 105 ~ "District 5",
+    district == 105 ~ "District 5",
     district == 106 & sub_district %in% c(20,22,25,10,30) ~ "North Clarence",
     district == 107 ~ "District 7",
     #district #hmm, a multi-district one. OR function (VERTICAL LINE), I guess.
@@ -105,10 +105,10 @@ add.mgmt.unit <- function(df){ #NEEDS trial run
     district == 110 & sub_district %in% c(31,32,33,34,21:24) ~ "Northern Frederick Sound",
     district == 111 & sub_district %in% c(11,12,13,14) ~ "Seymour",
     district == 111 & sub_district %in% c(50,55,20,21,33,34,35) ~ "Remainder District 11",
-    district == 112 & sub_district %in% c(41,42,43,44,45,46,47,48) ~ "Tenakee Inlet"
-    district == 112 $ sub_district %in% c(50,11,21,22,61) ~ "Remainder District 12"
+    district == 112 & sub_district %in% c(41,42,43,44,45,46,47,48) ~ "Tenakee Inlet",
+    district == 112 & sub_district %in% c(50,11,21,22,61) ~ "Remainder District 12"
       
-  )
+  ))
   
   return(df2)
 }

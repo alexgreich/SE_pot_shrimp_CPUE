@@ -12,6 +12,8 @@ library(ggplot2)
 library(cowplot)
 library(lubridate)
 
+source("Code/Shrimp_functions.R")
+
 #load data
 one <- read.csv("Data/Shrimp Tickets before and including 2004.csv")
 two <- read.csv("Data/Shrimp Tickets 2005 to 2017.csv")
@@ -55,6 +57,7 @@ all_shrimp_foucs_years_2 <- all_shrimp_focus_years %>% rename(district = Distric
 all_shrimp_foucs_years_2$sub_district <- substr(all_shrimp_foucs_years_2$Stat.Area, 4,5)
 
 all_shrimp_w_analysis_area <- add.analysis.area(all_shrimp_foucs_years_2)
+all_shrimp_w_analysis_area <- add.mgmt.unit(all_shrimp_w_analysis_area)
 
 #add managment area
 
@@ -63,7 +66,6 @@ all_shrimp_w_analysis_area <- add.analysis.area(all_shrimp_foucs_years_2)
 #functions (see Tyler's AIGKC code for inspiration)
 
 #wrangle with functions
-source("Code/Shrimp_functions.R")
 
 #IMPORTANT: SOME ENTRIES HAVE POT LIFTS REPLICATED PER ROW. DOES MY FILTERING ACCOMIDATE THAT? WE DO NOT WANT TO SUM THESE
 
