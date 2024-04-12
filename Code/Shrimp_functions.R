@@ -88,9 +88,9 @@ add.analysis.area <- function(df) {
 
 
 #add managment unit function aka fisheries
-add.mgmt.unit <- function(df){ #NEEDS QC!!
+add.mgmt.unit <- function(df){ #NEEDS trial run
   df2 <- df %>% Management_unit = case_when(
-    district == 101 ~ "District 1", #only works if we want everthting in district 1
+    district == 101 ~ "District 1", #only works if we want everthting in district 1 #maybe check if district one has all the necessary subdistricts/areas (and no extras)
     district == 102 ~ "District 2",
     district == 103 & sub_district %in% c(25, 11, 15, 21, 23, 30, 40) ~ "Section 3A",
     district == 103 & sub_district %in% c(50, 60, 70, 80, 90) ~ "Section 3B",
