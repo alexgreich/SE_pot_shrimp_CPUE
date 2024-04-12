@@ -56,10 +56,11 @@ unique(all_shrimp_focus_years$Species.Code) #multiple species. I'll want to dele
 all_shrimp_foucs_years_2 <- all_shrimp_focus_years %>% rename(district = District.Number)#, sub_district = Stat.Area) #renamed district to fit in the function
 all_shrimp_foucs_years_2$sub_district <- substr(all_shrimp_foucs_years_2$Stat.Area, 4,5)
 
-all_shrimp_w_analysis_area <- add.analysis.area(all_shrimp_foucs_years_2)
-all_shrimp_w_analysis_area <- add.mgmt.unit(all_shrimp_w_analysis_area)
+all_shrimp_w_analysis_area <- add.analysis.area(all_shrimp_foucs_years_2) #add analysis area
+all_shrimp_w_analysis_area <- add.mgmt.unit(all_shrimp_w_analysis_area) #add mgmt area
 
-#add managment area
+#quick QC of mgmt area
+##TO DO
 
 
 ##################################################################################
@@ -70,13 +71,14 @@ all_shrimp_w_analysis_area <- add.mgmt.unit(all_shrimp_w_analysis_area)
 #IMPORTANT: SOME ENTRIES HAVE POT LIFTS REPLICATED PER ROW. DOES MY FILTERING ACCOMIDATE THAT? WE DO NOT WANT TO SUM THESE
 
 #wragnle spot shrimp by district
-unique(all_shrimp_w_analysis_area$district) 
+unique(all_shrimp_w_analysis_area$district)
+unique(all_shrimp_w_analysis_area$Management_unit)
 
 #what do all of the districts correspond to??
 #102 112 115 101 103 113 111 107 106 110 108 116 183 104 105 109 114 181
 
 
-dist_107_pot_shrimp <-  wrangle.spot.shrimp.by.district(all_shrimp_w_analysis_area, 107)
+dist_107_pot_shrimp <-  wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, 107)
 
 dist_101_pot_shrimp <- wrangle.spot.shrimp.by.district(all_shrimp_w_analysis_area, 101)
 
@@ -84,6 +86,12 @@ dist_101_pot_shrimp <- wrangle.spot.shrimp.by.district(all_shrimp_w_analysis_are
 dist_15_coon_shrimp <- wrangle.coonstripe.shrimp.by.district(all_shrimp_w_analysis_area, 115)
 
 
+#filter using mgmt unit (more practical)
+
+mgmt_u_District_7 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 7")
+View(mgmt_u_District_7)
+str(mgmt_u_District_7) # 4639 by 16. 
+str(filter(mgmt_u_District_7, Analysis.Area=="Upper Ernest Sound")) #ok that looks about right
 
 
 ###############################################################################
