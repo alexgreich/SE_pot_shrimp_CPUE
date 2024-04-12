@@ -94,8 +94,29 @@ str(mgmt_u_District_7) # 4639 by 16.
 str(filter(mgmt_u_District_7, Analysis.Area=="Upper Ernest Sound")) #ok that looks about right
 
 
-###############################################################################
-#Analysis!
+##################################################################################################
+#Analysis
+##do I need to incoporate survey info, or is it already incorporated?
+
+#for entire region 1 (including stray areas?) (are there stray areas?)
+###oh a random effects model with nested random effecs (where did I do this before??)
+###random effects: area nested within management unit
+###glmm, probably
+
+
+#by Management Unit
+##start here
+##Wait. This will be a mixed effects model, with the random effects being the analysis area.
+### I do not think I will weigh each analysis area. I think it is not relevant, the way I calculate things. The model will know which area has more fishing/more entries
+### glmm, probably
+
+#by Area
+##See tyler code. Create a function that will do it for me
+
+
+
+
+############################################################################################
 
 
 #QUESTIONS
