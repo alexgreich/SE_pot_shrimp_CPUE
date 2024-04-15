@@ -225,7 +225,8 @@ wrangle.coonstripe.shrimp.by.district <- function(dat, distr){
       Stat.Week=max(Stat.Week), #I'm just saying I want this in the resulting df
       Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
       Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
-      vessel_count=max(vessel_count) #I'm just saying I want this in the resulting df
+      vessel_count=max(vessel_count), #I'm just saying I want this in the resulting 
+      Management_unit=max(Management_unit) #added in anticipation of combining this with full dataset
     ) %>%
     ungroup() 
   
@@ -270,6 +271,7 @@ wrangle.coonstripe.shrimp.by.district <- function(dat, distr){
 ##CAUTION: this omits some of the analysis areas.
 ###Do we care about Lookta sound?
 
+#ok well, let's continue this for page 2 on the table
 wrangle.spot.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be in quotes
   
   #test
@@ -302,7 +304,7 @@ wrangle.spot.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be 
       Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
       Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
       vessel_count=max(vessel_count), #I'm just saying I want this in the resulting df
-      Managment_unit=max(Management_unit) #added 4/15/24. seems to have worked
+      Management_unit=max(Management_unit) #added 4/15/24. seems to have worked
     ) %>%
     ungroup() 
   

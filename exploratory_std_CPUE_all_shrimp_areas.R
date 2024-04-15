@@ -85,7 +85,7 @@ dist_15_coon_shrimp <- wrangle.coonstripe.shrimp.by.district(all_shrimp_w_analys
 #filter using mgmt unit (more practical)
 
 mgmt_u_District_7 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 7")
-View(mgmt_u_District_7)
+#View(mgmt_u_District_7)
 str(mgmt_u_District_7) # 4639 by 16. 
 str(filter(mgmt_u_District_7, Analysis.Area=="Upper Ernest Sound")) #ok that looks about right
 
@@ -123,7 +123,7 @@ dist_15_coon_shrimp <- wrangle.coonstripe.shrimp.by.district(all_shrimp_w_analys
 #combine to make master cleaned data with cpue
 wrangled_shrimp <- rbind(mgmt_u_District_1, mgmt_u_District_2, mgmt_u_Section_3A, mgmt_u_Section_3B, mgmt_u_Tenakee_Inlet, mgmt_u_R_District_12,
       mgmt_u_R_District_11, mgmt_u_District_7, mgmt_u_North_Clarence, mgmt_u_N_Fred_Sound, mgmt_u_Seymour, mgmt_u_S_Fred_Sound,
-      mgmt_u_N_Sumner_Strait, mgmt_u_District_4, mgmt_u_District_5, mgmt_u_District_9, dist_15_coon_shrimp) #16 total, 17 with the coons
+      mgmt_u_N_Sumner_Strait, mgmt_u_District_4, mgmt_u_District_5, mgmt_u_District_9)#, dist_15_coon_shrimp) #16 total, 17 with the coons
 
 #Q: IMPORTANT!! there are extra analysis areas that do not fit into mangament units (DO THESE STILL EXIST AFTER SPECEIS ARE CORRECTLY FILTERED??). Do I include these or exclude these from analysis?
 #does district 15 (coonstripe) get included in overall analysis? Dist 15 was not included
@@ -142,7 +142,7 @@ ggplot(wrangled_shrimp) + aes(x=log(CPUE_nom)) + geom_density()# + geom_vline(ae
 qqnorm(log(wrangled_shrimp$CPUE_nom+1)) #pretty good
 
 ##by mgmt unit?
-ggplot(wrangled_shrimp) + aes(x=log(CPUE_nom)) + geom_density() + facet_wrap(~) #fuck, need to add in managemnt unit to the wrangle. Or just retain it in the wrangle function
+ggplot(wrangled_shrimp) + aes(x=log(CPUE_nom)) + geom_density() + facet_wrap(~Management_unit) 
 
 
 ##by analysis area?
@@ -155,14 +155,23 @@ ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=CPUE_nom) + geom_boxplot()
 ### Bradfield canal, lower E sound, Upper E sound, Zimovia strait
 
 
+
+###wragnle Q's:
+# do I care about stray stat areas not included? Dist 15 not mentioned ?
+
+###########################################################################################
+###############################################################################################
 ###################################################################################################
 #Analysis
+library(mgcv)
 ##do I need to incorporate survey info, or is it already incorporated?
 
-#for entire region 1 (including stray areas?) (are there stray areas?)
-###oh a random effects model with nested random effecs (where did I do this before??)
+#for ENTIRE REGION 1 (including stray areas?) (are there stray areas?)  
+#does it makes sense to look at these things at the region level? #kind of makes more sense to look at things at the mangemtn unit level, I would think
+###oh a random effects model with nested random effecs (where did I do this before??) - other shrimp CPUE stuff
 ###random effects: area nested within management unit
 ###glmm, probably
+#gamm with nested random effects (maybe look at tyler code again tho)
 
 
 #by Management Unit
@@ -170,6 +179,17 @@ ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=CPUE_nom) + geom_boxplot()
 ##Wait. This will be a mixed effects model, with the random effects being the analysis area.
 ### I do not think I will weigh each analysis area. I think it is not relevant, the way I calculate things. The model will know which area has more fishing/more entries
 ### glmm, probably
+#gamm with: something like this: gam(log(CPUE_nom) ~ vessel_count + Season.Ref + ADFG.Number + s(jdate, k=4), data=(corr_spot))
+##but I need to see examples. Season ref is temporally autocorrelated, or should be at least. How to account for that.
+#gamm with temporal autocorrealtion. Also, analysis areas (wihin mgmt units) should be a ranef
+#formula gloval mod like this: glob_mod ~ gam(log(CPUE_nom+1) ~ vessel_count + ADFG.Number(the vessel ID) + SOME YEAR INDICATOR + random effect(Analysis.Area(do I need to smooth? try out random intercept and slope)) +s(jdate); cor=AR1 (account for seasonal autocorrelation somehow))
+##Gam() arguments to check out: offset (should use instead of cpue_nom+1?) #reminds me of Matt cpue paper, I should have it on this compiter
+####family. Can I use a log link instead of log(CPUE)? Does it matter?
+#####select - lets gam remove terms from the model?H 
+##### H is the argument for a coeff matrix, but something about a penalty
+
+#consider trying out a glmm also. But gamm would be good for jdate
+#ugh my penguin book is at work.
 
 #by Area
 ##See tyler code. Create a function that will do it for me
