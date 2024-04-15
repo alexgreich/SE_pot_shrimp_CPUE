@@ -112,18 +112,43 @@ dist_15_coon_shrimp <- wrangle.coonstripe.shrimp.by.district(all_shrimp_w_analys
 
 #qc, make sure mgmt unit has only the stat areas you want
 ###I suspect that there might be a surprise extra stat area or two in the older data
+#d7 ### Bradfield canal, lower E sound, Upper E sound, Zimovia strait
+#d1
+#d2
+#d4
+#d5
+#d9
+
 
 #combine to make master cleaned data with cpue
 wrangled_shrimp <- rbind(mgmt_u_District_1, mgmt_u_District_2, mgmt_u_Section_3A, mgmt_u_Section_3B, mgmt_u_Tenakee_Inlet, mgmt_u_R_District_12,
       mgmt_u_R_District_11, mgmt_u_District_7, mgmt_u_North_Clarence, mgmt_u_N_Fred_Sound, mgmt_u_Seymour, mgmt_u_S_Fred_Sound,
       mgmt_u_N_Sumner_Strait, mgmt_u_District_4, mgmt_u_District_5, mgmt_u_District_9, dist_15_coon_shrimp) #16 total, 17 with the coons
 
-#Q: IMPORTANT!! there are extra analysis areas that do not fit into mangament units. Do I include these or exclude these from analysis?
+#Q: IMPORTANT!! there are extra analysis areas that do not fit into mangament units (DO THESE STILL EXIST AFTER SPECEIS ARE CORRECTLY FILTERED??). Do I include these or exclude these from analysis?
 #does district 15 (coonstripe) get included in overall analysis? Dist 15 was not included
 #the vessel questsion: is the presence of an ADFG vessel the survey contribution to the cpue??
 
 ##################################################################################################
 #exploratory data analysis (make some graphs!!)
+
+#is my data nomrally distributed?
+##by full region?\
+#hist(wrangled_shrimp$CPUE_nom)
+ggplot(wrangled_shrimp) + aes(x=CPUE_nom) + geom_density()
+mean<-mean(log(wrangled_shrimp$CPUE_nom))
+ggplot(wrangled_shrimp) + aes(x=log(CPUE_nom)) + geom_density()# + geom_vline(aes(xintercept = mean(log(CPUE_nom))))
+#log-tranformed looks pretty damn normal
+qqnorm(log(wrangled_shrimp$CPUE_nom+1)) #pretty good
+
+##by mgmt unit?
+ggplot(wrangled_shrimp) + aes(x=log(CPUE_nom)) + geom_density() + facet_wrap(~) #fuck, need to add in managemnt unit to the wrangle. Or just retain it in the wrangle function
+
+
+##by analysis area?
+
+
+
 names(mgmt_u_District_7)
 ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=CPUE_nom) + geom_boxplot()
 #what stat areas does this include?
