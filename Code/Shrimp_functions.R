@@ -339,3 +339,4 @@ wrangle.spot.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be 
   return(df_6)
   
 }
+
