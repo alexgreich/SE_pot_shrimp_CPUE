@@ -301,7 +301,8 @@ wrangle.spot.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be 
       Stat.Week=max(Stat.Week), #I'm just saying I want this in the resulting df
       Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
       Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
-      vessel_count=max(vessel_count) #I'm just saying I want this in the resulting df
+      vessel_count=max(vessel_count), #I'm just saying I want this in the resulting df
+      Managment_unit=max(Management_unit) #added 4/15/24. seems to have worked
     ) %>%
     ungroup() 
   
