@@ -90,7 +90,7 @@ str(mgmt_u_District_7) # 4639 by 16.
 str(filter(mgmt_u_District_7, Analysis.Area=="Upper Ernest Sound")) #ok that looks about right
 
 
-#clean by managment unit
+#clean by management unit
 unique(all_shrimp_w_analysis_area$Management_unit)
 mgmt_u_District_1 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 1")
 mgmt_u_District_2 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 2")
@@ -98,11 +98,11 @@ mgmt_u_Section_3A <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area
 mgmt_u_Section_3B <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Section 3B")
 mgmt_u_Tenakee_Inlet <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Tenakee Inlet")
 mgmt_u_R_District_12 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Remainder District 12")
-mgmt_u_R_District_11 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Remainder District 11") #WARNING: need to revise this one for both spots AND coons
+mgmt_u_R_District_11 <- wrangle.spotcoon.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Remainder District 11") #both spots AND coons #guess I could have species code choice written into the function...instead of making 3 different functions
 mgmt_u_District_7 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 7")
 mgmt_u_North_Clarence <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "North Clarence")
 mgmt_u_N_Fred_Sound <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Northern Frederick Sound")
-mgmt_u_Seymour <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Seymour") #WARNING: need to revise this one for both spots AND coons (part of D11) #maybe ask WHY they use both spot and coons
+mgmt_u_Seymour <- wrangle.spotcoon.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Seymour") #both spot and coons
 mgmt_u_S_Fred_Sound <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Southern Frederick Sound")
 mgmt_u_N_Sumner_Strait <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Sumner Strait")
 mgmt_u_District_4 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 4")
@@ -112,7 +112,7 @@ mgmt_u_District_9 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area
 mgmt_u_Section_13AB <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Section 13-A/B") #something is nor working with the page 2 values
 mgmt_u_Section_13C <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "Section 13-C")
 mgmt_u_District_14 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 14")
-mgmt_u_District_16 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 16")  #shit! Might have to revise. max just said in email:
+mgmt_u_District_16 <- wrangle.spotcoon.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 16") 
 ##D16 and D11 both spots AND coons. D15 just coons
 ###I'll liekly have to write a special function for D16 and D11, based on what max says. It will be really close to other functions, so not a huge effort
 #the coons
@@ -136,7 +136,7 @@ mgmt_u_R_District_15 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_a
 wrangled_shrimp <- rbind(mgmt_u_District_1, mgmt_u_District_2, mgmt_u_Section_3A, mgmt_u_Section_3B, mgmt_u_Tenakee_Inlet, mgmt_u_R_District_12,
       mgmt_u_R_District_11, mgmt_u_District_7, mgmt_u_North_Clarence, mgmt_u_N_Fred_Sound, mgmt_u_Seymour, mgmt_u_S_Fred_Sound,
       mgmt_u_N_Sumner_Strait, mgmt_u_District_4, mgmt_u_District_5, mgmt_u_District_9, #)#, dist_15_coon_shrimp) #16 total, 17 with the coons
-      mgmt_u_Section_13AB, mgmt_u_Section_13C, mgmt_u_District_14, mgmt_u_District_16,#adding the ones I missed from page 2.   PLEASE NOTE THAT D11, D16 LIKELY NEED REVISION!!
+      mgmt_u_Section_13AB, mgmt_u_Section_13C, mgmt_u_District_14, mgmt_u_District_16,#adding the ones I missed from page 2.  
 mgmt_u_District_15E, mgmt_u_R_District_15) #the coons
 
 ##################################################################################################
