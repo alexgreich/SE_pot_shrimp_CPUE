@@ -41,3 +41,14 @@ sum_spot_shrimp_all <- sum_shrimp_focus_years %>% #this is where NA's appear for
 
 #LETS THINK ABOUT POTENTIAL CAVEATS TO THIS METHOD.
 ##DID IT WRANGLE RIGHT? RE-VISIT TOMORROW.
+
+
+####4/23/24
+#vessel count over each mgmt unit by uear. SOMETHING IS WRONG>
+wrangled_shrimp_2 <- wrangled_shrimp %>%
+  group_by(Season.Ref, Management_unit) %>% #group by this ok?
+  mutate(vessel_count_by_mgmt_unit = sum(vessel_count)) %>%
+  ungroup() 
+##let's check if that worked
+wrangled_shrimp_2 %>% filter(Management_unit == "District 1") %>% #there we go, looks much better. Need to QC that wrangle tho. There were not 6000 fishing bessels in a year right? something is still uip
+  ggplot(aes(x=factor(Season.Ref), y= vessel_count_by_mgmt_unit)) + geom_point()
