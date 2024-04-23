@@ -371,7 +371,13 @@ wrangle.coon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be 
     mutate(vessel_count = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
     ungroup() #ungroup
   
-  #unique(df_2$Species.Code) #what is 962?
+  #unique(df_2$Species.Code) #what is 962
+  
+  #vessel count by mgmt unit ADDED 4/23/24, NEEDS QC
+  df_2 <- df_2 %>%
+    group_by(Season.Ref, Management_unit, Species.Code) %>% 
+    mutate(vessel_count_mgmt_u = n_distinct(ADFG.Number)) %>% 
+    ungroup()
   
   #ca
   df_3 <- df_2 %>%
@@ -388,6 +394,7 @@ wrangle.coon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be 
       Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
       Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
       vessel_count=max(vessel_count), #I'm just saying I want this in the resulting df
+      vessel_count_mgmt_u=max(vessel_count_mgmt_u), #ADDED 4/23/24
       Management_unit=max(Management_unit) #added 4/15/24. seems to have worked
     ) %>%
     ungroup() 
@@ -444,7 +451,11 @@ wrangle.spotcoon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to
     mutate(vessel_count = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
     ungroup() #ungroup
   
-  #unique(df_2$Species.Code) #what is 962?
+  #vessel count by mgmt unit ADDED 4/23/24, NEEDS QC
+  df_2 <- df_2 %>%
+    group_by(Season.Ref, Management_unit, Species.Code) %>% 
+    mutate(vessel_count_mgmt_u = n_distinct(ADFG.Number)) %>% 
+    ungroup()
   
   #ca
   df_3 <- df_2 %>%
@@ -461,6 +472,7 @@ wrangle.spotcoon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to
       Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
       Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
       vessel_count=max(vessel_count), #I'm just saying I want this in the resulting df
+      vessel_count_mgmt_u=max(vessel_count_mgmt_u), #ADDED 4/23/24
       Management_unit=max(Management_unit) #added 4/15/24. seems to have worked
     ) %>%
     ungroup() 
