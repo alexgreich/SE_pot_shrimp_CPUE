@@ -165,9 +165,60 @@ ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=CPUE_nom) + geom_boxplot()
 ### Bradfield canal, lower E sound, Upper E sound, Zimovia strait
 
 
+#PHIL STUFF BELOW
+## 3) Examine variability in the variables that may affect cpue:
+##    a) Variables as a function of TIME: 
+##### by vessel ID
+##### by fishing area
+##### fishing area by stat area
+# Time variables: jdate, Season, month, week 
+
+#by stat area (see phil code line 353 of Jig_BRF_CPUE.R)
+
+#CPUE AS A FUNCTION OF TIME - see line 378 of phil code
+##vessel ID
+## # vessels
+##other covariates and ranefs
+##jdate
+##by fishing area
+##by stat area
+
+#CHECK COR BETWEEN VARIABLES - PHIL CODE 443
+
+#MAKE DATA FACTORS THAT NEED TO BE FACTORS?
+
 
 ###wragnle Q's:
 # do I care about stray stat areas not included? Dist 15 not mentioned ?
+
+#variables that I care about
+##season ref (year) - a factor
+##vessel count (how many vessels)- not a factor, but an integer
+##ADFG number (vessel ID) - a factor
+##jdate - a smoothed (cyclical?) variable
+##analysis area - a random effect (Analysis.Area)
+##mgmt unit aka fishery - split up by this, and in the region-wide analysis, a random effect
+
+#look at some global graphs
+## by time
+ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y= vessel_count) + geom_point() #fuck, is vessel count per area
+ggplot(mgmt_u_District_1) + aes(x=factor(Season.Ref), y= vessel_count) + geom_point() #yes, yes it is.
+mgmt_u_District_1 %>% filter(Analysis.Area=="Portland Canal") %>%
+  ggplot(aes(x=factor(Season.Ref), y= vessel_count)) + geom_point() #ok. need to add up vessel count by analysis area and year, to get the total vessel count by district in a year
+
+#vessel count over each mgmt unit by uear. SOMETHING IS WRONG>
+wrangled_shrimp_2 <- wrangled_shrimp %>%
+  group_by(Season.Ref, Management_unit) %>% #group by this ok?
+  mutate(vessel_count_by_mgmt_unit = sum(vessel_count)) %>%
+  ungroup() 
+##let's check if that worked
+wrangled_shrimp_2 %>% filter(Management_unit == "District 1") %>% #there we go, looks much better. Need to QC that wrangle tho. There were not 6000 fishing bessels in a year right? something is still uip
+   ggplot(aes(x=factor(Season.Ref), y= vessel_count_by_mgmt_unit)) + geom_point()
+
+## correlations
+
+#split by unit
+##look by analysis area
 
 ###########################################################################################
 ###############################################################################################
@@ -198,8 +249,23 @@ library(mgcv)
 #####select - lets gam remove terms from the model?H 
 ##### H is the argument for a coeff matrix, but something about a penalty
 
+## 6) Calculate standardized CPUE based on: FROM PHIL's CODE
+##    a) loggam: gam using log(set_ppm+0.1)
+##      i) Run null models (CPUE ~ Year + one variable at a time)
+##      ii) Run Global models (CPUE ~ YEAR + all variables) (drop one variable at a time)
+##      iii) Run intermediate models to arrive at choice for standardizing model
+##           NOTE: Chose to favor BIC over AIC to be more conservative in deciding
+##                 which variables to include.  Overfitting will smooth out the 
+##                 indices and remove contrast.
+##      iv) Standardize CPUE index, compare to nominal
+
+#null model with one idditional facgtor by year (line 518 of phil code)
+m0 <- gam(log(CPUE_nom + 1) ~ factor(Batch.Year), data=wrangled_shrimp) #use batch year or season? Which season does batch year correspond to?
+
+
+
 #consider trying out a glmm also. But gamm would be good for jdate
-#ugh my penguin book is at work.
+
 
 #by Area
 ##See tyler code. Create a function that will do it for me
