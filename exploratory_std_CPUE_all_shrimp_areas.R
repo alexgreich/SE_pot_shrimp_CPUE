@@ -252,6 +252,7 @@ ggplot(mgmt_u_R_District_11) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) +
 ##check correlation plots for each mgmt area
 ###how to set up? Look at ernest code
 ###maybe look at map for managment areas, see if makes sense?
+###
 
 ###########################################################################################
 ###############################################################################################
