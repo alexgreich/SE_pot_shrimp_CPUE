@@ -368,7 +368,7 @@ wrangle.coon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be 
   #vessel count in the area of fishing during that year. SHOULD I DO THIS AFTER FILTERING FOR SPOT SHRIMP?? Perhaps.
   df_2 <- df_1 %>% 
     group_by(Season.Ref, Analysis.Area, Species.Code) %>% #grouping by season (year) AND.. fish ticket #AND... species??
-    mutate(vessel_count = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
+    mutate(vessel_count_aa = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
     ungroup() #ungroup
   
   #unique(df_2$Species.Code) #what is 962
@@ -393,7 +393,7 @@ wrangle.coon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be 
       Stat.Week=max(Stat.Week), #I'm just saying I want this in the resulting df
       Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
       Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
-      vessel_count=max(vessel_count), #I'm just saying I want this in the resulting df
+      vessel_count_aa=max(vessel_count_aa), #I'm just saying I want this in the resulting df
       vessel_count_mgmt_u=max(vessel_count_mgmt_u), #ADDED 4/23/24
       Management_unit=max(Management_unit) #added 4/15/24. seems to have worked
     ) %>%
@@ -448,7 +448,7 @@ wrangle.spotcoon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to
   #vessel count in the area of fishing during that year. SHOULD I DO THIS AFTER FILTERING FOR SPOT SHRIMP?? Perhaps.
   df_2 <- df_1 %>% 
     group_by(Season.Ref, Analysis.Area, Species.Code) %>% #grouping by season (year) AND.. fish ticket #AND... species??
-    mutate(vessel_count = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
+    mutate(vessel_count_aa = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
     ungroup() #ungroup
   
   #vessel count by mgmt unit ADDED 4/23/24, NEEDS QC
@@ -471,7 +471,7 @@ wrangle.spotcoon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to
       Stat.Week=max(Stat.Week), #I'm just saying I want this in the resulting df
       Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
       Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
-      vessel_count=max(vessel_count), #I'm just saying I want this in the resulting df
+      vessel_count_aa=max(vessel_count_aa), #I'm just saying I want this in the resulting df
       vessel_count_mgmt_u=max(vessel_count_mgmt_u), #ADDED 4/23/24
       Management_unit=max(Management_unit) #added 4/15/24. seems to have worked
     ) %>%
