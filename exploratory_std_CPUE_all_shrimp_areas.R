@@ -86,6 +86,8 @@ dist_15_coon_shrimp <- wrangle.coonstripe.shrimp.by.district(all_shrimp_w_analys
 
 mgmt_u_District_7 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_area, "District 7")
 #View(mgmt_u_District_7)
+#n_distinct((mgmt_u_District_7 %>% filter(Season.Ref == "21-22") %>% select(Vessel.Name))) #quick QC of vessel name count by district. Looks good, 
+##but I should check the spot and coons combined areas
 str(mgmt_u_District_7) # 4639 by 16. 
 str(filter(mgmt_u_District_7, Analysis.Area=="Upper Ernest Sound")) #ok that looks about right
 
