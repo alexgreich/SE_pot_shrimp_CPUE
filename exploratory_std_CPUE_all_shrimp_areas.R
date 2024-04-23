@@ -151,10 +151,10 @@ ggplot(wrangled_shrimp) + aes(x=CPUE_nom) + geom_density()
 mean<-mean(log(wrangled_shrimp$CPUE_nom))
 ggplot(wrangled_shrimp) + aes(x=log(CPUE_nom)) + geom_density()# + geom_vline(aes(xintercept = mean(log(CPUE_nom))))
 #log-tranformed looks pretty damn normal
-qqnorm(log(wrangled_shrimp$CPUE_nom+1)) #pretty good
+qqnorm(log(wrangled_shrimp$CPUE_nom+0.001)) #pretty good
 
 ##by mgmt unit?
-ggplot(wrangled_shrimp) + aes(x=log(CPUE_nom)) + geom_density() + facet_wrap(~Management_unit) 
+ggplot(wrangled_shrimp) + aes(x=log(CPUE_nom+0.001)) + geom_density() + facet_wrap(~Management_unit) 
 
 
 ##by analysis area?
@@ -163,6 +163,8 @@ ggplot(wrangled_shrimp) + aes(x=log(CPUE_nom)) + geom_density() + facet_wrap(~Ma
 
 names(mgmt_u_District_7)
 ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=CPUE_nom) + geom_boxplot()
+ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=log(CPUE_nom+0.001)) + geom_boxplot()
+ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=log(CPUE_nom+0.001)) + geom_violin()
 #what stat areas does this include?
 ### Bradfield canal, lower E sound, Upper E sound, Zimovia strait
 
@@ -203,8 +205,9 @@ ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=CPUE_nom) + geom_boxplot()
 
 #look at some global graphs
 ## by time
-ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y= vessel_count) + geom_point() #fuck, is vessel count per area
-ggplot(mgmt_u_District_1) + aes(x=factor(Season.Ref), y= vessel_count) + geom_point() #yes, yes it is.
+ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y= vessel_count_mgmt_u) + geom_point() + facet_wrap(~Management_unit) 
+##note that something is wrong with vessel count in Remainder District 11. And in seymour
+ggplot(mgmt_u_District_1) + aes(x=factor(Season.Ref), y= vessel_count_mgmt_u) + geom_point() #this works. Gives me the vessel count per mgmt unit per year
 mgmt_u_District_1 %>% filter(Analysis.Area=="Portland Canal") %>%
   ggplot(aes(x=factor(Season.Ref), y= vessel_count)) + geom_point() #ok. need to add up vessel count by analysis area and year, to get the total vessel count by district in a year
 
