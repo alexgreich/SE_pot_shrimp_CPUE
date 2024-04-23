@@ -436,6 +436,7 @@ wrangle.coon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be 
 
 #wrangle where we care about combined spot and coons, as in D11 and D16
 #need to make a wrangle coons by mgmt unit function
+##might be wrong: vessel_count_aa. Pretty sure vessel_count_mgmt_unit is good to go.
 wrangle.spotcoon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to be in quotes
   
   #test
@@ -447,7 +448,9 @@ wrangle.spotcoon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to
   
   #vessel count in the area of fishing during that year. SHOULD I DO THIS AFTER FILTERING FOR SPOT SHRIMP?? Perhaps.
   df_2 <- df_1 %>% 
-    group_by(Season.Ref, Analysis.Area, Species.Code) %>% #grouping by season (year) AND.. fish ticket #AND... species??
+    #group_by(Season.Ref, Analysis.Area, Species.Code) %>% #grouping by season (year) AND.. fish ticket #AND... species
+    filter(Species.Code==965|Species.Code==964) %>% 
+    group_by(Season.Ref, Management_unit) %>% #altered 04/23/24 to accomodate that we count coons and shrimps here. Might make the lowerdown species filter code irrelevant
     mutate(vessel_count_aa = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
     ungroup() #ungroup
   

@@ -125,10 +125,10 @@ mgmt_u_R_District_15 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_a
 
 #D11 QC. Something is up with the wrangle spotcoon code and the vessel count
 n_distinct((mgmt_u_R_District_11 %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
-View((mgmt_u_R_District_11 %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
+#View((mgmt_u_R_District_11 %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
 n_distinct((mgmt_u_Seymour %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
-View((mgmt_u_Seymour %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
-View((mgmt_u_Seymour %>% filter(Season.Ref == "12-13")))
+#View((mgmt_u_Seymour %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
+#View((mgmt_u_Seymour %>% filter(Season.Ref == "12-13")))
 
 #qc, make sure mgmt unit has only the stat areas you want
 ###I suspect that there might be a surprise extra stat area or two in the older data
@@ -213,9 +213,12 @@ ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=log(CPUE_nom+0.001)) + geom_v
 #look at some global graphs
 ## by time
 ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y= vessel_count_mgmt_u) + geom_point() + facet_wrap(~Management_unit) 
-##note that something is wrong with vessel count in Remainder District 11. And in seymour
 ggplot(mgmt_u_District_1) + aes(x=factor(Season.Ref), y= vessel_count_mgmt_u) + geom_point() #this works. Gives me the vessel count per mgmt unit per year
-
+ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y= factor(ADFG.Number)) + geom_point() + facet_wrap(~Management_unit)
+ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=jdate) + geom_point() + facet_wrap(~Management_unit)
+ggplot(wrangled_shrimp) + aes(x=factor(Management_unit), y=jdate) + geom_point() + facet_wrap(~Season.Ref)
+##um... is there not a 22-23 season??
+unique(wrangled_shrimp$Season.Ref) #I guess not then? unless I wrangled it out incorrectly.
 
 ## correlations
 
@@ -281,4 +284,6 @@ m0 <- gam(log(CPUE_nom + 1) ~ factor(Batch.Year), data=wrangled_shrimp) #use bat
 #QUESTIONS
 ###which districts/areas use coons insetad of spot shrimp for stock assessment purposes #district 15 uses coons. #is this dist.... 115?
 ###what is the VALUE column in the raw data?
-###what is the spot shrimp and coon code? Spot is 965, coon is 964
+###what is the spot shrimp and coon code? Spot is 965, coon is 964 x
+####is there not a 22-23 season??
+### Is survey data already included in the fish tickets (ADFG Vessel????a) Or do I need to figure out how to include
