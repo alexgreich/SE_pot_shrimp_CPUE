@@ -218,9 +218,14 @@ ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y= factor(ADFG.Number)) + ge
 ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=jdate) + geom_point() + facet_wrap(~Management_unit)
 ggplot(wrangled_shrimp) + aes(x=factor(Management_unit), y=jdate) + geom_point() + facet_wrap(~Season.Ref)
 ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_boxplot(outliers=F) + facet_wrap(~Management_unit) ##um... is there not a 22-23 season??
-ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=log(CPUE_nom)) + geom_boxplot() + facet_wrap(~Management_unit) #shit. I need to wrangle a cpue by analysis area per year, huh? The way I have it now is by vessel.
+ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=log(CPUE_nom)) + geom_boxplot(outliers=F) + facet_wrap(~Management_unit) #shit. I need to wrangle a cpue by analysis area per year, huh? The way I have it now is by vessel.
 ##how to go about this?? Make a different df for the by mgmt area, with one cpue per year per mgmt area? seems less precise? I have CPUE by vessel, should it be like this? Should it be at larger scale? How did phil calc nominal cpue?
 ##regardless, I need some cpue by year measurement. I can either take the avg of the cpue's I have now (by fish ticket) or calc another cpue measurement. OR dont worry about it and just graph the standardized (predicted) CPUE
+
+ggplot(wrangled_shrimp) + aes(color=factor(Season.Ref), y=log(CPUE_nom), x=Management_unit) + geom_boxplot()# + facet_wrap(~Management_unit) #shit. I need to wrangle a cpue by analysis area per year, huh? The way I have it now is by vessel.
+ggplot(wrangled_shrimp) + aes(y=log(CPUE_nom), x=Management_unit) + geom_boxplot()# + facet_wrap(~Management_unit) #shit. I need to wrangle a cpue by analysis area per year, huh? The way I have it now is by vessel.
+
+
 ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=total_weight) + geom_boxplot(outliers=F) + facet_wrap(~Management_unit) 
 
 ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=log(mean(CPUE_nom))) + geom_point() + facet_wrap(~Management_unit)
@@ -242,6 +247,11 @@ ggplot(mgmt_u_R_District_11) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) +
 
 #hmm . See if i can make the same plots as ernest, maybe? Make sure I'm on that page?
 ##maybe need to wrangle another df that is by df that is by mmgt unit, to calc harvest and effort? maybe I need to sum effort, harvest by mgmt unit and calc cpue that way.
+
+#factors in global model : cyclical smoother for jdate, number of vessels, ADFG number, analysis area as ranef. Which of these are correlated with cPUE?
+##check correlation plots for each mgmt area
+###how to set up? Look at ernest code
+###maybe look at map for managment areas, see if makes sense?
 
 ###########################################################################################
 ###############################################################################################
@@ -286,8 +296,9 @@ library(mgcv)
 m0 <- gam(log(CPUE_nom + 1) ~ factor(Batch.Year), data=wrangled_shrimp) #use batch year or season? Which season does batch year correspond to?
 
 
+#factors in global model : cyclical smoother for jdate, number of vessels, ADFG number, analysis area as ranef. Which of these are correlated with cPUE?
+##check correlation plots for each mgmt area
 
-#consider trying out a glmm also. But gamm would be good for jdate
 
 
 #by Area
