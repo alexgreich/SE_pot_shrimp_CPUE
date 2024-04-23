@@ -217,13 +217,31 @@ ggplot(mgmt_u_District_1) + aes(x=factor(Season.Ref), y= vessel_count_mgmt_u) + 
 ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y= factor(ADFG.Number)) + geom_point() + facet_wrap(~Management_unit)
 ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=jdate) + geom_point() + facet_wrap(~Management_unit)
 ggplot(wrangled_shrimp) + aes(x=factor(Management_unit), y=jdate) + geom_point() + facet_wrap(~Season.Ref)
-##um... is there not a 22-23 season??
+ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_boxplot(outliers=F) + facet_wrap(~Management_unit) ##um... is there not a 22-23 season??
+ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=log(CPUE_nom)) + geom_boxplot() + facet_wrap(~Management_unit) #shit. I need to wrangle a cpue by analysis area per year, huh? The way I have it now is by vessel.
+##how to go about this?? Make a different df for the by mgmt area, with one cpue per year per mgmt area? seems less precise? I have CPUE by vessel, should it be like this? Should it be at larger scale? How did phil calc nominal cpue?
+##regardless, I need some cpue by year measurement. I can either take the avg of the cpue's I have now (by fish ticket) or calc another cpue measurement. OR dont worry about it and just graph the standardized (predicted) CPUE
+ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=total_weight) + geom_boxplot(outliers=F) + facet_wrap(~Management_unit) 
+
+ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y=log(mean(CPUE_nom))) + geom_point() + facet_wrap(~Management_unit)
+
 unique(wrangled_shrimp$Season.Ref) #I guess not then? unless I wrangled it out incorrectly.
+
+#closer look: district cpue over time
+ggplot(mgmt_u_District_1) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) + geom_violin()
+ggplot(mgmt_u_District_2) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) + geom_violin()
+ggplot(mgmt_u_District_4) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) + geom_violin()
+ggplot(mgmt_u_Seymour) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) + geom_violin()
+ggplot(mgmt_u_R_District_11) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) + geom_violin()
+ggplot(mgmt_u_R_District_11) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) + geom_boxplot()
 
 ## correlations
 
 #split by unit
 ##look by analysis area
+
+#hmm . See if i can make the same plots as ernest, maybe? Make sure I'm on that page?
+##maybe need to wrangle another df that is by df that is by mmgt unit, to calc harvest and effort? maybe I need to sum effort, harvest by mgmt unit and calc cpue that way.
 
 ###########################################################################################
 ###############################################################################################
