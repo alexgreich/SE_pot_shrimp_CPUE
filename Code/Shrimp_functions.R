@@ -453,7 +453,8 @@ wrangle.spotcoon.shrimp.by.mgmt.unit <- function(dat, m_unit){  #m_unit needs to
   
   #vessel count by mgmt unit ADDED 4/23/24, NEEDS QC
   df_2 <- df_2 %>%
-    group_by(Season.Ref, Management_unit, Species.Code) %>% 
+    filter(Species.Code==965|Species.Code==964) %>% #added 4/23/24. Maybe should add to other wrangle functions too? Added b/c there were two vessel counts per mangment unit and year. (one for spot, one for coon)
+    group_by(Season.Ref, Management_unit) %>% #, Species.Code) %>% altered 04/23/24
     mutate(vessel_count_mgmt_u = n_distinct(ADFG.Number)) %>% 
     ungroup()
   

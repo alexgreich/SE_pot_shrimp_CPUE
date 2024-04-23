@@ -123,6 +123,13 @@ mgmt_u_R_District_15 <- wrangle.spot.shrimp.by.mgmt.unit(all_shrimp_w_analysis_a
 #will likely need to make additional fucntion, revise for D16 and D11. See max email about those districts using coon and spot shrimp, both, for CPUE.
 
 
+#D11 QC. Something is up with the wrangle spotcoon code and the vessel count
+n_distinct((mgmt_u_R_District_11 %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
+View((mgmt_u_R_District_11 %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
+n_distinct((mgmt_u_Seymour %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
+View((mgmt_u_Seymour %>% filter(Season.Ref == "12-13") %>% select(Vessel.Name)))
+View((mgmt_u_Seymour %>% filter(Season.Ref == "12-13")))
+
 #qc, make sure mgmt unit has only the stat areas you want
 ###I suspect that there might be a surprise extra stat area or two in the older data
 #d7 ### Bradfield canal, lower E sound, Upper E sound, Zimovia strait
@@ -208,8 +215,6 @@ ggplot(mgmt_u_District_7) + aes(x=Analysis.Area, y=log(CPUE_nom+0.001)) + geom_v
 ggplot(wrangled_shrimp) + aes(x=factor(Season.Ref), y= vessel_count_mgmt_u) + geom_point() + facet_wrap(~Management_unit) 
 ##note that something is wrong with vessel count in Remainder District 11. And in seymour
 ggplot(mgmt_u_District_1) + aes(x=factor(Season.Ref), y= vessel_count_mgmt_u) + geom_point() #this works. Gives me the vessel count per mgmt unit per year
-mgmt_u_District_1 %>% filter(Analysis.Area=="Portland Canal") %>%
-  ggplot(aes(x=factor(Season.Ref), y= vessel_count)) + geom_point() #ok. need to add up vessel count by analysis area and year, to get the total vessel count by district in a year
 
 
 ## correlations

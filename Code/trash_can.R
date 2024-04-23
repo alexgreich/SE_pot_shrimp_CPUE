@@ -52,3 +52,8 @@ wrangled_shrimp_2 <- wrangled_shrimp %>%
 ##let's check if that worked
 wrangled_shrimp_2 %>% filter(Management_unit == "District 1") %>% #there we go, looks much better. Need to QC that wrangle tho. There were not 6000 fishing bessels in a year right? something is still uip
   ggplot(aes(x=factor(Season.Ref), y= vessel_count_by_mgmt_unit)) + geom_point()
+
+
+# a graph I dont think I need now taht I wrangled better.
+mgmt_u_District_1 %>% filter(Analysis.Area=="Portland Canal") %>%
+  ggplot(aes(x=factor(Season.Ref), y= vessel_count_aa)) + geom_point() #ok. need to add up vessel count by analysis area and year, to get the total vessel count by district in a year
