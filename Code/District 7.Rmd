@@ -41,22 +41,85 @@ District 7 contains analysis areas:
   
   
   
-Exploratory Data Analysis for D7
+## Exploratory Data Analysis for D7
+Variables of interest:
+Random effect: Analysis.Area
+Fixed effects: jdate (smoothed and... cyclical?), vessel # (the count of vessels), ADFG # (individual vessel (fixed or random effect??)), Season aka year, 
+--If I do not include jdate, simplifies things?
+Response: nominal cpue
+
+Q: should I do something besides a log-transformation?
 ```{r}
+
+#cpue dist
+ggplot(D7) + aes(x=CPUE_nom) + geom_density()
+ggplot(D7) + aes(x=log(CPUE_nom+0.001)) + geom_density()
+qqnorm(log(D7$CPUE_nom)) #that kind of looks bad. Maybe somehting other than log-trans?
+qqnorm(D7$CPUE_nom)
+
+ggplot(D7) + aes(x=CPUE_nom) + geom_density()+facet_wrap(~Analysis.Area)
+ggplot(D7) + aes(x=log(CPUE_nom+0.001)) + geom_density()+facet_wrap(~Analysis.Area)
+
+#cpue by year
+ggplot(D7) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_point() #ther is a big outlier
+ggplot(D7) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_boxplot(outliers = F)
+
+ggplot(D7) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_boxplot(outliers = F) + facet_wrap(~Analysis.Area) #cpue varies... cyclically with time. Is season a fixed effect? I want to estimate it, so probs not. its def not linear.
+
+#catch by year
+ggplot(D7) + aes(x=factor(Season.Ref), y=total_weight) + geom_boxplot() #this is total weight per fish ticket.
+ggplot(D7) + aes(x=factor(Season.Ref), y=max_pots_2) + geom_boxplot()
+ggplot(D7) + aes(x=factor(Season.Ref), y=max_pots_2) + geom_boxplot(outliers=F)
+
+ggplot(D7) + aes(x=factor(Season.Ref), y=total_weight) + geom_boxplot() + facet_wrap(~Analysis.Area) #max pots per fish ticket
+ggplot(D7) + aes(x=factor(Season.Ref), y=max_pots_2) + geom_boxplot(outliers=F) + facet_wrap(~Analysis.Area)
+
+
+#cpue and vessel count
+ggplot(D7) + aes(x=factor(vessel_count_mgmt_u), y=log(CPUE_nom)) + geom_boxplot()
+ggplot(D7) + aes(x=factor(vessel_count_mgmt_u), y=log(CPUE_nom)) + geom_boxplot(outliers=F)
+ggplot(D7) + aes(x=factor(vessel_count_mgmt_u), y=log(CPUE_nom)) + geom_boxplot(outliers=F) + facet_wrap(~Analysis.Area)
+
+#cpue and district
+
+
+#cpue and jdate
+
+
+
+#correlation plot
+library(corrplot)
+D7_interest_cor <- D7 %>% select(CPUE_nom, jdate, vessel_count_mgmt_u)
+cor_prep <- cor(D7_interest_cor)
+corrplot(cor_prep)
+?pairs
 
 ```
 
-Exploratory Data Analysis for Analysis areas
-```{r}
-
-```
 
 Analysis and model testing: district 7 GAM with random effects
 ```{r}
+#null model
+m0 <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) ,data= D7 ) #how to add temporal autocorrealtion to this tho?
 
+#intermediate models
+
+
+#global model
+m_glob_r <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) + factor(ADFG.Number)+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=D7, ) #remove jdate? #crap should ADFG.Number be a random effect too?
+##how to alter the random effect to have a random global slope? See that paper.
+m_glob_nr
+  
+  
+#first decide if ranef or not, via global model?
+
+
+#TEST BELWO
+test <- gam(log(CPUE_nom+0.001) ~ vessel_count_mgmt_u + Season.Ref + ADFG.Number + s(jdate, k=4), data=(D7)) #that worked
+test2 <- gam(log(CPUE_nom+0.001) ~ vessel_count_mgmt_u + Season.Ref + ADFG.Number + s(jdate, k=4) + s(Analysis.Area, bs="re"), data=(D7)) #that did not work. Soemthign abotu my random effect not working.
 ```
 
-Analysos and model testing: individual analysis areas
+Analysis and model testing: individual analysis areas
 ```{r}
 #Bradfield canal
 
