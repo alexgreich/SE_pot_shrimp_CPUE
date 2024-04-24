@@ -57,3 +57,11 @@ wrangled_shrimp_2 %>% filter(Management_unit == "District 1") %>% #there we go, 
 # a graph I dont think I need now taht I wrangled better.
 mgmt_u_District_1 %>% filter(Analysis.Area=="Portland Canal") %>%
   ggplot(aes(x=factor(Season.Ref), y= vessel_count_aa)) + geom_point() #ok. need to add up vessel count by analysis area and year, to get the total vessel count by district in a year
+
+
+#################################3
+#from the D7 analysis
+test_df <- D7
+test_df$Analysis.Area <- factor(test_df$Analysis.Area)
+m_glob_r <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) + factor(ADFG.Number)+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=test_df) #ok that worked. I jsut cant make it a factor within my equation. Maybe I should adjust my df code accordingly. #also how to add ar1 auto correlation??
+summary(m_glob_r)

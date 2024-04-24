@@ -27,7 +27,11 @@ library(mgcv)
 Load the data and select for D7
 ```{r}
 wrangled_shrimp <- read.csv("Data/wrangled shrimp focus years.csv")
-D7 <- wrangled_shrimp %>% filter(Management_unit == "District 7")
+D7 <- wrangled_shrimp %>% filter(Management_unit == "District 7") %>%
+  mutate(Analysis.Area = factor(Analysis.Area),
+         ADFG.Number = factor(ADFG.Number),
+         Season.Ref = factor(Season.Ref)
+         )#make things factors for the gams
 
 unique(D7$Analysis.Area)
 ```
@@ -106,15 +110,12 @@ m0 <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) ,data= D7 ) #how to add tem
 
 
 #global model
-m_glob_r <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) + factor(ADFG.Number)+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(factor(Analysis.Area), bs="re", k=4), data=D7 ) #remove jdate? #crap should ADFG.Number be a\random effect too?
+m_glob_r <- gam(log(CPUE_nom + 0.001) ~ Season.Ref + ADFG.Number+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=D7 ) #remove jdate? #crap should ADFG.Number be a\random effect too?
 ##do I need to make this a factor somewhere else?
-test_df <- D7
-test_df$Analysis.Area <- factor(test_df$Analysis.Area)
-m_glob_r <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) + factor(ADFG.Number)+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=test_df) #ok that worked. I jsut cant make it a factor within my equation. Maybe I should adjust my df code accordingly.
-summary(m_glob_r)
+
 
 ##how to alter the random effect to have a random global slope? See that paper.
-m_glob_nr
+#maybe try the GI, GS, G, I, S method like in the Pederson paper.
   
   
 #first decide if ranef or not, via global model?
