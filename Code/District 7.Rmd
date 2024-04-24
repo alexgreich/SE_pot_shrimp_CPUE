@@ -46,4 +46,36 @@ Exploratory Data Analysis for D7
 
 ```
 
-Exploratory Data Analaysis for Analysis areas
+Exploratory Data Analysis for Analysis areas
+```{r}
+
+```
+
+Analysis and model testing: district 7 GAM with random effects
+```{r}
+
+```
+
+Analysos and model testing: individual analysis areas
+```{r}
+#Bradfield canal
+
+#Lower ernest sound
+
+#upper ernest sound
+
+#Zimovia strait
+
+
+```
+
+Comparison graphs
+```{r}
+
+```
+
+Results graphs
+```{r}
+
+```
+
