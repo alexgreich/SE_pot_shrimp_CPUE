@@ -1,0 +1,49 @@
+---
+title: "District 7"
+author: "Alex Reich"
+date: "2024-04-24"
+output: html_document
+---
+I do not  remember if I need to use the following code:
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Anyway, let's get started. This document will look at management unit District 7 for pot (spot) shrimp standardization. It will load in the (pre-wrangled) data, wrangle further for district 1, and then some EDA (focusing on variables of interest and correlation). The analysis will be by district with an HGAM (hierarchical GAM) with the variables of interest as fixed effects and Analysis Area as a random effect. I will do model selection on a few versions of this HGAM. I will then make graphs of the standardized CPUE (by district and) and whatever else Max wants. THEN, I will run individual models by analysis areas, ideally with an automated function, and compare the graphs of those automated functions to the cpue of the ranef model.This will help me decide if models should be by MANAGEMENT UNIT (larger) or by ANALYSIS AREA (smaller). In hindsight, I should start with District 7, since I have explored the Upper Ernest sound data extensively.Ok, now the RMD is named accordingly 
+
+
+Load libraries
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+library(viridis)
+library(RColorBrewer)
+library(mgcv)
+```
+
+
+Load the data and select for D7
+```{r}
+wrangled_shrimp <- read.csv("Data/wrangled shrimp focus years.csv")
+D7 <- wrangled_shrimp %>% filter(Management_unit == "District 7")
+
+unique(D7$Analysis.Area)
+```
+
+
+District 7 contains analysis areas:
+  Bradfield Canal
+  Lower Ernest Sound
+  Upper Ernest Sound
+  Zimovia Strait
+  
+  
+  
+Exploratory Data Analysis for D7
+```{r}
+
+```
+
+Exploratory Data Analaysis for Analysis areas

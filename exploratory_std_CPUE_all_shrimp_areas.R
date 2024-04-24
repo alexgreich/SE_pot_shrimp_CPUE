@@ -148,6 +148,9 @@ wrangled_shrimp <- rbind(mgmt_u_District_1, mgmt_u_District_2, mgmt_u_Section_3A
       mgmt_u_Section_13AB, mgmt_u_Section_13C, mgmt_u_District_14, mgmt_u_District_16,#adding the ones I missed from page 2.  
 mgmt_u_District_15E, mgmt_u_R_District_15) #the coons
 
+#write a csv for the by-district RMD's
+write.csv(x= wrangled_shrimp, file="Data/wrangled shrimp focus years.csv")
+
 ##################################################################################################
 #exploratory data analysis (make some graphs!!)
 
@@ -241,6 +244,7 @@ ggplot(mgmt_u_R_District_11) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) +
 ggplot(mgmt_u_R_District_11) + aes(x=factor(Season.Ref), y=log(CPUE_nom+0.01)) + geom_boxplot()
 
 ## correlations
+?pairs
 
 #split by unit
 ##look by analysis area
@@ -309,6 +313,15 @@ m0 <- gam(log(CPUE_nom + 1) ~ factor(Batch.Year), data=wrangled_shrimp) #use bat
 
 
 ############################################################################################
+
+
+#############################
+## ugh, I should start analysis by district
+################################
+#district 1
+##you know what? I'm going to make each district its own R script (or R markdown) when I'm figuring things out, at least, so I do not get lost.
+##might want to make the wrangled_shrimp its own csv so I can call upon that as needed. Noting that it is just the years of interest.,
+
 
 
 #QUESTIONS
