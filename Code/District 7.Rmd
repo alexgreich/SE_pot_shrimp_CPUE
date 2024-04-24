@@ -106,7 +106,13 @@ m0 <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) ,data= D7 ) #how to add tem
 
 
 #global model
-m_glob_r <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) + factor(ADFG.Number)+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=D7, ) #remove jdate? #crap should ADFG.Number be a random effect too?
+m_glob_r <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) + factor(ADFG.Number)+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(factor(Analysis.Area), bs="re", k=4), data=D7 ) #remove jdate? #crap should ADFG.Number be a\random effect too?
+##do I need to make this a factor somewhere else?
+test_df <- D7
+test_df$Analysis.Area <- factor(test_df$Analysis.Area)
+m_glob_r <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) + factor(ADFG.Number)+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=test_df) #ok that worked. I jsut cant make it a factor within my equation. Maybe I should adjust my df code accordingly.
+summary(m_glob_r)
+
 ##how to alter the random effect to have a random global slope? See that paper.
 m_glob_nr
   
@@ -116,7 +122,7 @@ m_glob_nr
 
 #TEST BELWO
 test <- gam(log(CPUE_nom+0.001) ~ vessel_count_mgmt_u + Season.Ref + ADFG.Number + s(jdate, k=4), data=(D7)) #that worked
-test2 <- gam(log(CPUE_nom+0.001) ~ vessel_count_mgmt_u + Season.Ref + ADFG.Number + s(jdate, k=4) + s(Analysis.Area, bs="re"), data=(D7)) #that did not work. Soemthign abotu my random effect not working.
+test2 <- gam(log(CPUE_nom+0.001) ~ vessel_count_mgmt_u + Season.Ref + ADFG.Number + s(jdate, k=4) + s(factor(Analysis.Area), bs="re"), data=(D7)) #that did not work. Soemthign abotu my random effect not working.
 ```
 
 Analysis and model testing: individual analysis areas
