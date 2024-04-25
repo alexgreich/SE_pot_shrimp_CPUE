@@ -98,10 +98,13 @@ cor_prep <- cor(D7_interest_cor)
 corrplot(cor_prep)
 ?pairs
 
+
+#check model residuals, see if we need ar1 correlation in the model
 ```
 
 
 Analysis and model testing: district 7 GAM with random effects
+GAMM with ar1 autocorrelation (is this too complciated?)
 ```{r}
 #null model
 m0 <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) ,data= D7 ) #how to add temporal autocorrealtion to this tho?
@@ -121,10 +124,140 @@ m_glob_r <- gam(log(CPUE_nom + 0.001) ~ Season.Ref + ADFG.Number+ s(vessel_count
 #first decide if ranef or not, via global model?
 
 
-#TEST BELWO
-test <- gam(log(CPUE_nom+0.001) ~ vessel_count_mgmt_u + Season.Ref + ADFG.Number + s(jdate, k=4), data=(D7)) #that worked
-test2 <- gam(log(CPUE_nom+0.001) ~ vessel_count_mgmt_u + Season.Ref + ADFG.Number + s(jdate, k=4) + s(factor(Analysis.Area), bs="re"), data=(D7)) #that did not work. Soemthign abotu my random effect not working.
+#https://stackoverflow.com/questions/47586110/autocorrelation-in-generalized-additive-models-gam  #how to add ar1 to my gam
+##is this necessary or too complicated?
+##gamm() with correllation = corAR1(form = ~time) where time is the var giving me ordering in time of the evently spaced observations
+##or bam() and specify rho, the ar1 parameter
+###check model residuals tho to see if we NEED ar1
 ```
+Some wild experimentation below,
+delete later and keep what is useful
+```{r}
+#null model
+m0 <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) ,data= D7, method="ML" ) #how to add temporal autocorrealtion to this tho?
+
+m_glob_r <- gam(log(CPUE_nom + 0.001) ~ Season.Ref + s(ADFG.Number, bs="re")+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=D7 , method="ML") 
+
+m_glob_r_2 <- gam(log(CPUE_nom + 0.001) ~ Season.Ref+ ADFG.Number + s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=D7, method="ML" )
+
+m_glob_nr <- gam(log(CPUE_nom + 0.001) ~ Season.Ref + ADFG.Number+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4), data=D7, method="ML") 
+
+#do I need random effects in the model, and which random effects?
+AIC(m_glob_r, m_glob_r_2, m_glob_nr, m0) #m glob r wins, but not by much
+
+
+#get rid some variables
+summary(m_glob_r)
+m_3 <- gam(log(CPUE_nom + 0.001) ~ Season.Ref + s(ADFG.Number, bs="re")+ s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=D7, method="ML" ) 
+
+AIC(m_glob_r, m_3) #same, meaning drop vessel count
+summary(m_3)
+
+#oh shit tho, let me check temporal autocorrelation, maybe I should check for interactions
+?acf
+acf(residuals(m_glob_r),main="raw residual ACF") #yeah, some autocorrelation
+
+#so...what do I do?
+
+#try the global model with interaction effects, see if autocorrelation still exists
+#https://r.qcbs.ca/workshop08/book-en/gam-with-interaction-terms.html
+#m_glob_r_int <- gam(log(CPUE_nom + 0.001) ~ Season.Ref + s(ADFG.Number, bs="re")+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=D7 , method="ML") +
+ #s() #interaction effects
+
+#ok ummm, maybe do smaller levels first to chekc for int
+mod_int_1 <- gam(log(CPUE_nom + 0.001) ~ Season.Ref + s(ADFG.Number, bs="re")+ s(vessel_count_mgmt_u, k=4) + s(vessel_count_mgmt_u, by=Season.Ref, k=4) + s(Analysis.Area, bs="re", k=4), data=D7 , method="REML") #
+
+summary(mod_int_1)
+summary(m_glob_r)
+
+
+```
+
+Let's try things the pederson way (Delete later except for stuff that is good)
+```{r}
+
+```
+
+But wait do I even, like, need a GAM?
+m_glob_r <- gam(log(CPUE_nom + 0.001) ~ Season.Ref + s(ADFG.Number, bs="re")+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=D7 , method="ML") 
+```{r}
+
+
+#log cpue vs. ADFG number (ok thats a radom effect)
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=ADFG.Number) + geom_boxplot()
+###oh maybe this should be a special random effect. I forget
+##this: Random factor smooth interactions
+#bs="fs" A special smoother class (see smooth.construct.fs.smooth.spec) is available for the case in which a smooth is required at each of a large number of factor levels (for example a smooth for each patient in a study), and each smooth should have the same smoothing parameter. The "fs" smoothers are set up to be efficient when used with gamm, and have penalties on each null sapce component (i.e. they are fully ‘random effects’). from: https://stat.ethz.ch/R-manual/R-patched/RHOME/library/mgcv/html/smooth.terms.html
+#or just a regular random effect. can try both ways. why not
+
+#log cpue vs. season ref (is this smoothed in phil's code??)
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Season.Ref) + geom_boxplot(outliers=F) #totally autocorrelated
+
+#log cpue vs. Analysis area (also a random effect)
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Analysis.Area) + geom_boxplot() #ok they're not... that different
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Analysis.Area) + geom_boxplot(outliers=F)
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Analysis.Area) + geom_violin()
+
+ggplot(D7) + aes(y= CPUE_nom, x=Analysis.Area) + geom_boxplot(outliers=F)
+ggplot(D7) + aes(y= CPUE_nom, x=Analysis.Area) + geom_violin()
+
+#log cpue vs jdate (is this worth including, because the season might not be so important to look at, migjt give uneven results since fishing season recently shifted)
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=jdate) + geom_smooth() #i think maybe jdate isnt necessary because the fishing season is a specific window.
+
+#log cpue vs. vessel count
+##vessel count by year and analysis area
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=vessel_count_aa) + geom_smooth()
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=vessel_count_aa) + geom_smooth() + geom_point() #ok that puts thigs in perspective
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=vessel_count_aa) + geom_smooth(method = "lm")# + geom_point()
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=vessel_count_aa) + geom_smooth(method = "lm") + geom_point()
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=vessel_count_aa) + geom_point()
+
+ggplot(D7) + aes(y= CPUE_nom, x=vessel_count_aa) + geom_smooth()
+ggplot(D7) + aes(y= CPUE_nom, x=vessel_count_aa) + geom_smooth(method = "lm") #ok teh change in cpue is super small. Like, 1 pound. Idbutk if that matters 
+ggplot(D7) + aes(y= CPUE_nom, x=vessel_count_aa) + geom_smooth(method = "lm") + geom_point()
+
+##vessel count by year and mgmt u
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=vessel_count_mgmt_u) + geom_smooth()
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=vessel_count_mgmt_u) + geom_point()
+```
+
+The analysis above gives me:
+Analysis area probs matters as a ranef
+ADFG ID matters as a ranef (or fixef, what did Phil and Tyler do?)
+Can include number of vessels but I think it will get cut out. Unsure if smooth or linear, try both.
+
+I do not think I should use jdate.
+
+
+Alright round 2 mod selection after thinking about it a bit, following logic above.
+log(CPUE+0.001) ~ Season.Ref + s(vessel_count_aa, k=4 or 3) + s(Analysis.Area, bs="re") + s(ADFG ID, bs="re") and int effects?
+   int effects between Season ref and analysis area
+   int effects between season ref and ADFG ID
+```{r}
+mod_g_new <- gam(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "ML", data=D7)
+
+summary(mod_g_new)
+
+#(do I test temporal int effects before adding temporal autocorrelation??)
+#is there temporal autocorrelation
+
+acf(residuals(mod_g_new),main="raw residual ACF") #yep. AR1?
+
+#add correlation structure
+mod_g_new_gamm <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7) #no autocorr
+summary(mod_g_new_gamm$gam)
+
+gamm_corr <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corAR1(form = ~1|Season.Ref)) #yes autocorr #form = ~ Season.Ref had to delete from inside the corAR1 argument
+#I do not know if this is right
+?corAR1
+
+summary(gamm_corr$gam)
+acf(residuals(gamm_corr$gam),main="raw residual ACF") #well that did not work
+AIC(gamm_corr, mod_g_new_gamm) #mgith have to go $gam
+```
+
+
+
 
 Analysis and model testing: individual analysis areas
 ```{r}
