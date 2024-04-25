@@ -251,8 +251,12 @@ gamm_corr <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s
 #I do not know if this is right
 ?corAR1
 
+gamm_corr_2 <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corAR1(0.4))
+
 summary(gamm_corr$gam)
 acf(residuals(gamm_corr$gam),main="raw residual ACF") #well that did not work
+acf(residuals(gamm_corr_2$gam),main="raw residual ACF")
+
 AIC(gamm_corr, mod_g_new_gamm) #mgith have to go $gam
 ```
 
