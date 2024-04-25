@@ -247,7 +247,7 @@ acf(residuals(mod_g_new),main="raw residual ACF") #yep. AR1?
 mod_g_new_gamm <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7) #no autocorr
 summary(mod_g_new_gamm$gam)
 
-gamm_corr <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corAR1(form = ~1|Season.Ref)) #yes autocorr #form = ~ Season.Ref had to delete from inside the corAR1 argument
+gamm_corr <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corAR1(0.4,form = ~1|Season.Ref)) #yes autocorr #form = ~ Season.Ref had to delete from inside the corAR1 argument
 #I do not know if this is right
 ?corAR1
 
