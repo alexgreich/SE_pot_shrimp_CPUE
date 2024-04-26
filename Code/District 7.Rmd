@@ -242,22 +242,38 @@ summary(mod_g_new)
 #is there temporal autocorrelation
 
 acf(residuals(mod_g_new),main="raw residual ACF") #yep. AR1?
+pacf(residuals(mod_g_new),main="raw residual ACF") 
+#based on these graphs, try 2nd, 3rd, or 4th order autocorrelation
+
+gamm_corr_3 <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corARMA(form = ~1|Season.Ref, p=3, q=1))
+
+acf(residuals(gamm_corr_3$gam),main="raw residual ACF") #yep. AR1?
+pacf(residuals(gamm_corr_3$gam),main="raw residual ACF") 
+
 
 #add correlation structure
 mod_g_new_gamm <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7) #no autocorr
 summary(mod_g_new_gamm$gam)
 
-gamm_corr <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corAR1(0.4,form = ~1|Season.Ref)) #yes autocorr #form = ~ Season.Ref had to delete from inside the corAR1 argument
+gamm_corr <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corAR1(0.4,form = ~1|Batch.Year)) #yes autocorr 
+summary(gamm_corr$gam)
+
+gamm_corr_0.5 <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corAR1(0.4,form = ~Season.Ref|Batch.Year))
+#form = ~ Season.Ref had to delete from inside the corAR1 argument
 #I do not know if this is right
 ?corAR1
 
-gamm_corr_2 <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corAR1(0.4))
+gamm_corr_2 <- gamm(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7, correlation = corAR1(form = ~1|Season.Ref))
 
 summary(gamm_corr$gam)
 acf(residuals(gamm_corr$gam),main="raw residual ACF") #well that did not work
 acf(residuals(gamm_corr_2$gam),main="raw residual ACF")
 
 AIC(gamm_corr, mod_g_new_gamm) #mgith have to go $gam
+
+#try second, third
+
+
 ```
 
 
