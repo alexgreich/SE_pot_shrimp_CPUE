@@ -4,11 +4,6 @@ author: "Alex Reich"
 date: "2024-04-24"
 output: html_document
 ---
-I do not  remember if I need to use the following code:
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 
 Anyway, let's get started. This document will look at management unit District 7 for pot (spot) shrimp standardization. It will load in the (pre-wrangled) data, wrangle further for district 1, and then some EDA (focusing on variables of interest and correlation). The analysis will be by district with an HGAM (hierarchical GAM) with the variables of interest as fixed effects and Analysis Area as a random effect. I will do model selection on a few versions of this HGAM. I will then make graphs of the standardized CPUE (by district and) and whatever else Max wants. THEN, I will run individual models by analysis areas, ideally with an automated function, and compare the graphs of those automated functions to the cpue of the ranef model.This will help me decide if models should be by MANAGEMENT UNIT (larger) or by ANALYSIS AREA (smaller). In hindsight, I should start with District 7, since I have explored the Upper Ernest sound data extensively.Ok, now the RMD is named accordingly 
 
@@ -314,8 +309,32 @@ AIC(mod_g_2, mod_g_2.2, mod_g_2.3)
 
 ```
 
+So, I wanted a model without smoothed effects. I probs should not use the gam function, but nlme or lme4 or something
+Test if ranefs are necessary, please
+It should be a glmm I think its a glmm. 4/29/24
+- shoule ADFG.number be random or fixed effect????
+- year should be fixed effect
+- area should be random effect
+- do year and area have interaction effects? Do year and vessel have interaction effects? do vessel and year have interaction effects?
+--what is the best ranef structure??
+- correlation matrix include??
+- test vessel count (aa) as fixef too.
+- maybe add week instead of jdate??
+read the highlighted refs in the mauder and punt paper
+```{r}
+library(lme4)
+
+mod_g_2 <- gam(log(CPUE_nom+0.001) ~ Season.Ref + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7)
+
+#does vessel count matter? I do not think so.
+#do area and year have interaction effects
+#test just with lm for above
+#do area and vessel have interaction effects
+```
+
 
 I chose model 2, which has year(season.ref) as the fixed effect and ADFG Number, Analysis areas as random effects.
+- maybe try adding temporal autocorrelation to this one??
 ```{r}
 plot(mod_g_2)
 
@@ -352,4 +371,18 @@ Results graphs
 ```{r}
 
 ```
+
+Aside:
+IS ADFG vessel accounted for?
+-in email max says:
+
+This is where shrimp survey data is located.
+https://www.adfg.alaska.gov/analytics/saw.dll?Answers&path=%2Fshared%2FCommercial%20Fisheries%2FRegion%20I%2FInvertebrates%2FSurvey%2FShrimp%2FSpecimens%20with%20Pot%20Data
+
+Survey catches are also reported in fish ticket data, recorded as Fishery: Test Fish, and Permit Holder: ADFG Sitka. These survey catches should be removed from calculations in CPUE and total reportable harvest.- I DO NOT SEE THESE REPORTED THO
+
+Ulitmaely, data limited CPUE standardization. Random efects model, nlme?
+
+WE SHOULD incorporate ADFG vessel survey info. But I don't see this info in teh data, even tho max says it is there??
+- do I need to take from the survey data? Do I need a fishing power comparison factor from fish ticket to survey data
 
