@@ -88,6 +88,21 @@ library(ggcorrplot)
 library(plm)
 ?plm
 ?phtest
-fix <- 
-  ran <- 
+#fix <- 
+ # ran <- 
   
+  
+
+#  I chose model 2, which has year(season.ref) as the fixed effect and ADFG Number, Analysis areas as random effects.
+#- maybe try adding temporal autocorrelation to this one??
+#  ```{r}
+#plot(mod_g_2)
+
+#what if I did all analysis areas separatly? Was it appropriate to group them together in a managment unit?
+
+#predicted results
+predicted <- predict(mod_g_2)
+plot(predicted)
+
+#predicted results after a grid method where boats are averaged or something (see Ernest sound code. DO this, make big graph, make graphs for individual areas, them compare to spot shrimp ernest sound)
+```

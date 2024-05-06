@@ -353,7 +353,9 @@ mod_g_2 <- gam(log(CPUE_nom+0.001) ~ Season.Ref + s(Analysis.Area, bs="re") + s(
 
 #global model - writing these, need sun
 #m_interactions
-m_glob <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number+vessel_count_aa + (1|ADFG.Number) (1|Analysis.Area) + (Season.Ref|Analysis.Area), data=D7, REML=F) #takes forever
+m_glob <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + (1|ADFG.Number) + (1+ Season.Ref|Analysis.Area), data=D7, REML=F) #not run, takes forevet
+m_glob_0.1 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + (1 + Season.Ref|ADFG.Number) + (1+ Season.Ref|Analysis.Area), data=D7, REML=F) #not run, takes forever
+#takes forever
 m_glob2 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + (1|Analysis.Area), data=D7, REML=F)
 m_glob3 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + (1|ADFG.Number) + (1|Analysis.Area), data=D7, REML=F)
 m_glob4 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + Analysis.Area, data=D7)
@@ -372,28 +374,66 @@ summary(m_glob6) #but conceptually, I think we should go with this model
 
 
 ```
-
-
-
+Model selection with Tyler's function
 ```{r}
-
+library(MASS)
+stepAIC()
 ```
 
 
+Model diagnostics
 
-I chose model 2, which has year(season.ref) as the fixed effect and ADFG Number, Analysis areas as random effects.
-- maybe try adding temporal autocorrelation to this one??
 ```{r}
-plot(mod_g_2)
+#wil tyler's funciton work for me?
+f_diagnostics <- function(x) {
+  
+  # qq plot
+  ggplot()+
+    stat_qq_line(aes(sample = resid(x, type = "deviance")), color = 2)+
+    stat_qq(aes(sample = resid(x, type = "deviance")))+
+    labs(x = "Theorical Quantiles", y = "Deviance Residuals", title = "Q-Q plot") -> p1
+  
+  # historgam
+  ggplot()+
+    geom_histogram(aes(x =  resid(x, type = "deviance")))+
+    labs(x = "Residuals", y = "Count", title = "Histogram of residuals") -> p2
+  
+  # resid
+  ggplot()+
+    geom_point(aes(x = x$linear.predictors, y = resid(x, type = "deviance")))+
+    geom_hline(yintercept = 0, linetype = 2)+
+    labs(x = "Linear Predictor", y = "Residuals", title = "Resids. vs linear pred.") -> p3
+  
+  # resid vs fitted 
+  ggplot()+
+    geom_point(aes(x = x$fitted.values, y = x$model$cpue))+
+    labs(x = "Fitted Values", y = "Response Values", title = "Response vs. Fitted") -> p4
+  
+  
+  (p1 + p2) / (p3 + p4)
+  
+}
+#end tyler's function
 
-#what if I did all analysis areas separatly? Was it appropriate to group them together in a managment unit?
-
-#predicted results
-predicted <- predict(mod_g_2)
-plot(predicted)
-
-#predicted results after a grid method where boats are averaged or something (see Ernest sound code. DO this, make big graph, make graphs for individual areas, them compare to spot shrimp ernest sound)
+f_diagnostics(m_glob6)
 ```
+
+Alex diagnostics
+```{r}
+plot(m_glob6)
+lmerTest::step(m_glob6)
+#step(m_glob6)
+
+
+```
+
+Standardized (predicted)  CPUE
+```{r}
+?predict.merMod
+pred<- predict(m_glob6, type = "response", se = TRUE) #newdata needs something?? right?
+
+```
+
 
 
 
