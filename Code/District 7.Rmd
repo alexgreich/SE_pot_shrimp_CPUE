@@ -4,6 +4,13 @@ author: "Alex Reich"
 date: "2024-04-24"
 output: html_document
 ---
+Aside:
+Argh, I had to upgrade to R 4.4.0 to get lme4 (the matrix package, specifically) to work. But now the r markdown settings are different and I can't default to the home directory being the project. So I will set that here:
+```{r, setup, include=FALSE}
+knitr::opts_knit$set(root.dir = 'C:/Users/agreich/OneDrive - State of Alaska/Desktop/Shrimp/Shrimp tickets (pot shrimp)/SE_pot_shrimp_CPUE')
+```
+
+
 
 Anyway, let's get started. This document will look at management unit District 7 for pot (spot) shrimp standardization. It will load in the (pre-wrangled) data, wrangle further for district 1, and then some EDA (focusing on variables of interest and correlation). The analysis will be by district with an HGAM (hierarchical GAM) with the variables of interest as fixed effects and Analysis Area as a random effect. I will do model selection on a few versions of this HGAM. I will then make graphs of the standardized CPUE (by district and) and whatever else Max wants. THEN, I will run individual models by analysis areas, ideally with an automated function, and compare the graphs of those automated functions to the cpue of the ranef model.This will help me decide if models should be by MANAGEMENT UNIT (larger) or by ANALYSIS AREA (smaller). In hindsight, I should start with District 7, since I have explored the Upper Ernest sound data extensively.Ok, now the RMD is named accordingly 
 
@@ -29,6 +36,8 @@ D7 <- wrangled_shrimp %>% filter(Management_unit == "District 7") %>%
          )#make things factors for the gams
 
 unique(D7$Analysis.Area)
+
+getwd()
 ```
 
 
@@ -326,10 +335,22 @@ library(lme4)
 
 mod_g_2 <- gam(log(CPUE_nom+0.001) ~ Season.Ref + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7)
 
+
 #does vessel count matter? I do not think so.
 #do area and year have interaction effects
 #test just with lm for above
 #do area and vessel have interaction effects
+
+#global model - writing these, need sun
+m_interactions
+m_glob <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + (1|Analysis.Area) + (Season.Ref|Analysis.Area), data=D7, REML=F)
+m_glob2 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + (1|Analysis.Area), data=D7, REML=F)
+m_extra_nesting
+
+
+#play around with nesting: stat area within analysis area
+#DOES MAX MAKE DECSIONS BY ANALYSIS AREA OR BY MGMT UNIT??
+
 ```
 
 
