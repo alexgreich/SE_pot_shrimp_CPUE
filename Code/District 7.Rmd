@@ -223,6 +223,15 @@ ggplot(D7) + aes(y= CPUE_nom, x=vessel_count_aa) + geom_smooth(method = "lm") + 
 ##vessel count by year and mgmt u
 ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=vessel_count_mgmt_u) + geom_smooth()
 ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=vessel_count_mgmt_u) + geom_point()
+
+
+#investigate relationships for random effects
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Season.Ref) + geom_point()+ facet_wrap(~Analysis.Area)
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Season.Ref, color=Analysis.Area) + geom_boxplot() + theme_cowplot() # i would like to do a geom smooth plot of this too
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Season.Ref, color=Analysis.Area) + geom_violin() + theme_cowplot()
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Season.Ref, color=ADFG.Number) + geom_boxplot() + theme_cowplot() + theme(legend.position= "none")
+
+##your experience depends on what group you are inb
 ```
 
 The analysis above gives me:
@@ -332,6 +341,7 @@ It should be a glmm I think its a glmm. 4/29/24
 read the highlighted refs in the mauder and punt paper
 ```{r}
 library(lme4)
+library(lmerTest)
 
 mod_g_2 <- gam(log(CPUE_nom+0.001) ~ Season.Ref + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "REML", data=D7)
 
@@ -342,16 +352,33 @@ mod_g_2 <- gam(log(CPUE_nom+0.001) ~ Season.Ref + s(Analysis.Area, bs="re") + s(
 #do area and vessel have interaction effects
 
 #global model - writing these, need sun
-m_interactions
-m_glob <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + (1|Analysis.Area) + (Season.Ref|Analysis.Area), data=D7, REML=F)
+#m_interactions
+m_glob <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number+vessel_count_aa + (1|ADFG.Number) (1|Analysis.Area) + (Season.Ref|Analysis.Area), data=D7, REML=F) #takes forever
 m_glob2 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + (1|Analysis.Area), data=D7, REML=F)
-m_extra_nesting
+m_glob3 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + (1|ADFG.Number) + (1|Analysis.Area), data=D7, REML=F)
+m_glob4 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + Analysis.Area, data=D7)
+m_glob5 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + Analysis.Area + vessel_count_aa, data=D7)
+m_glob6 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + (1|ADFG.Number) + (1|Analysis.Area), data=D7, REML=F)
+m_glob7 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number + (1|Analysis.Area), data=D7, REML=F)
+m_glob8 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + (1|ADFG.Number) + Analysis.Area, data=D7, REML=F)
+
+AIC(m_glob2, m_glob3, m_glob4,m_glob5,m_glob6, m_glob7, m_glob8) #says glob 5. Let's chgeck for correlation tho. 6 is better than 3, if we choose ranef
+summary(m_glob2)
+summary(m_glob4)
+summary(m_glob5) #the AIC prefers the linear model
+summary(m_glob6) #but conceptually, I think we should go with this model
 
 
-#play around with nesting: stat area within analysis area
-#DOES MAX MAKE DECSIONS BY ANALYSIS AREA OR BY MGMT UNIT??
+
 
 ```
+
+
+
+```{r}
+
+```
+
 
 
 I chose model 2, which has year(season.ref) as the fixed effect and ADFG Number, Analysis areas as random effects.
@@ -402,8 +429,10 @@ https://www.adfg.alaska.gov/analytics/saw.dll?Answers&path=%2Fshared%2FCommercia
 
 Survey catches are also reported in fish ticket data, recorded as Fishery: Test Fish, and Permit Holder: ADFG Sitka. These survey catches should be removed from calculations in CPUE and total reportable harvest.- I DO NOT SEE THESE REPORTED THO
 
-Ulitmaely, data limited CPUE standardization. Random efects model, nlme?
 
-WE SHOULD incorporate ADFG vessel survey info. But I don't see this info in teh data, even tho max says it is there??
-- do I need to take from the survey data? Do I need a fishing power comparison factor from fish ticket to survey data
+_______
+
+Take away from KAtie meeting:
+focus on shrimp ticket for now.
+Ask Max at what level does he make decisions. When he closes an area, what is that based off of?
 

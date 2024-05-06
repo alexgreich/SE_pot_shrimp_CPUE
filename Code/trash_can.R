@@ -65,3 +65,29 @@ test_df <- D7
 test_df$Analysis.Area <- factor(test_df$Analysis.Area)
 m_glob_r <- gam(log(CPUE_nom + 0.001) ~ factor(Season.Ref) + factor(ADFG.Number)+ s(vessel_count_mgmt_u, k=4) + s(jdate, k=4) + s(Analysis.Area, bs="re", k=4), data=test_df) #ok that worked. I jsut cant make it a factor within my equation. Maybe I should adjust my df code accordingly. #also how to add ar1 auto correlation??
 summary(m_glob_r)
+
+
+
+
+#m_extra_nesting
+
+
+#play around with nesting: stat area within analysis area
+#DOES MAX MAKE DECSIONS BY ANALYSIS AREA OR BY MGMT UNIT??
+
+
+#aside about looking at the correlation of factors
+?model.matrix
+model.matrix(wrangled_shrimp %>% select(Season.Ref, ADFG.Number) )
+
+library(ggcorrplot)
+?ggcorrplot
+
+
+###phtest
+library(plm)
+?plm
+?phtest
+fix <- 
+  ran <- 
+  
