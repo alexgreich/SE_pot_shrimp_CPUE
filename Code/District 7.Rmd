@@ -207,6 +207,9 @@ ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Season.Ref, color=ADFG.Number) + geom
 
 ##your experience depends on what group you are inb
 
+#what is an average fishing vessel that is in all locations
+ggplot(D7) + aes(y= log(CPUE_nom+0.001), x=Analysis.Area, color=ADFG.Number) + geom_boxplot() + theme_cowplot() #+ theme(legend.position= "none")
+
 
 ```
 
@@ -372,6 +375,8 @@ unique(D7$ADFG.Number) #88
 ###so, this might not be the best predict. Maybe I should leave the vessel part out, or choose a vessel in the middle?
 ###also, filter out unknown vessel at some point please
 
+#what is, like, a very average fishing vessel, that is in all locations?
+#or I could use jsut the fishing vessels that overlap? WHAT DID PHIL AND TYLER DO?!?!?!?!
 
 
 #newdata
