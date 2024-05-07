@@ -377,6 +377,7 @@ unique(D7$ADFG.Number) #88
 
 #what is, like, a very average fishing vessel, that is in all locations?
 #or I could use jsut the fishing vessels that overlap? WHAT DID PHIL AND TYLER DO?!?!?!?!
+###oh. see Spot_shrimp_ernest_clean_4.R code for an option.starts at 894. I weigh the ADFG.Number based on how many timest it appears in the dataset. How does that work for multiple areas tho??
 
 
 #newdata
@@ -388,6 +389,9 @@ newdata2 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
  )
 
 pred2 <- predict(m_glob6_IR, newdata2, type = "response", se = TRUE) #ok so adfg numver should be something
+
+
+#also, remember that exp() will give you the mean, so use the adjustment to get the median plz!!!!
 ```
 
 
