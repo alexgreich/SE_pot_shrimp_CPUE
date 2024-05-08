@@ -1,13 +1,160 @@
 ---
 title: "District 1"
 author: "Alex Reich"
-date: "2024-04-24"
+date: "2024-05-08"
 output: html_document
 ---
-I do not  remember if I need to use the following code:
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+Set the wd for this rmd
+```{r, setup, include=FALSE}
+knitr::opts_knit$set(root.dir = 'C:/Users/agreich/OneDrive - State of Alaska/Desktop/Shrimp/Shrimp tickets (pot shrimp)/SE_pot_shrimp_CPUE')
 ```
 
 
-Anyway, let's get started. This document will look at management unit District 1 for pot (spot) shrimp standardization. It will load in the (pre-wrangled) data, wrangle further for district 1, and then some EDA (focusing on variables of interest and correlation). The analysis will be by district with an HGAM (hierarchical GAM) with the variables of interest as fixed effects and Analysis Area as a random effect. I will do model selection on a few versions of this HGAM. I will then make graphs of the standardized CPUE (by district and) and whatever else Max wants. THEN, I will run individual models by analysis areas, ideally with an automated function, and compare the graphs of those automated functions to the cpue of the ranef model.This will help me decide if models should be by MANAGEMENT UNIT (larger) or by ANALYSIS AREA (smaller). In hindsight, I should start with District 7, since I have explored the Upper Ernest sound data extensively.
+Load libraries
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+library(viridis)
+library(RColorBrewer)
+library(mgcv)
+```
+
+
+Load the data and select for D1
+```{r}
+wrangled_shrimp <- read.csv("Data/wrangled shrimp focus years.csv")
+D1 <- wrangled_shrimp %>% filter(Management_unit == "District 1") %>%
+  mutate(Analysis.Area = factor(Analysis.Area),
+         ADFG.Number = factor(ADFG.Number),
+         Season.Ref = factor(Season.Ref)
+         )#make things factors for the gams
+
+unique(D1$Analysis.Area)
+
+```
+
+
+Exploratory plots
+```{r}
+#cpue dist
+ggplot(D1) + aes(x=CPUE_nom) + geom_density()
+ggplot(D1) + aes(x=log(CPUE_nom+0.001)) + geom_density()
+
+qqnorm(log(D1$CPUE_nom))
+
+
+#variables vs year
+ggplot(D1) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_boxplot()
+ggplot(D1) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_boxplot(outliers=F)
+ggplot(D1) + aes(x=factor(Season.Ref), y=log(CPUE_nom+ 0.001)) + geom_boxplot()
+ggplot(D1) + aes(x=factor(Season.Ref), y=log(CPUE_nom+ 0.001)) + geom_boxplot() + facet_wrap(~Analysis.Area)
+ggplot(D1) + aes(x=factor(Season.Ref), y=log(CPUE_nom+ 0.001)) + geom_boxplot(outliers=F) + facet_wrap(~Analysis.Area)
+ggplot(D1) + aes(x=factor(Season.Ref), y=log(CPUE_nom+ 0.001)) + geom_boxplot() + facet_wrap(~Analysis.Area)
+ggplot(D1) + aes(x=factor(Season.Ref), y=log(CPUE_nom+ 0.001), color=Analysis.Area) + geom_boxplot() #+ facet_wrap(~Analysis.Area)
+#does cpue slope vary with analysis area? Totally does:
+ggplot(D1) + aes(x=Batch.Year, y=log(CPUE_nom+ 0.001), color=Analysis.Area) + geom_smooth(se=F) #+ geom_point()
+ggplot(D1) + aes(x=Batch.Year, y=log(CPUE_nom+ 0.001), color=Analysis.Area) + geom_smooth(method="lm", se=F)
+#does cpue slope vary with ADFG.ID?
+ggplot(D1) + aes(x=Batch.Year, y=log(CPUE_nom+ 0.001), color=ADFG.Number) + geom_smooth(method="lm", se=F) + theme(legend.position="none") #hello absolute chaos
+
+ggplot(D1) + aes(x=factor(vessel_count_mgmt_u), y=log(CPUE_nom)) + geom_boxplot(outliers=F) + facet_wrap(~Analysis.Area)
+ggplot(D1) + aes(x=vessel_count_mgmt_u, y=log(CPUE_nom)) + geom_smooth() + facet_wrap(~Analysis.Area)
+ggplot(D1) + aes(x=vessel_count_mgmt_u, y=log(CPUE_nom)) + geom_smooth() #+ facet_wrap(~Analysis.Area)
+ggplot(D1) + aes(x=vessel_count_mgmt_u, y=log(CPUE_nom)) + geom_smooth(method="lm") + geom_point()
+
+#so medium amound of vessel might be less cpue, but I think this is correlated with fishing conditions in the year
+
+#adfg number and cpue
+ggplot(D1) + aes(y= log(CPUE_nom+0.001), x=ADFG.Number) + geom_boxplot()
+
+#does the trend in log cpue vary by analysis area?
+
+
+```
+
+Model selection DO NOT RUN
+```{r}
+#throw a gam in there
+mod_g_new <- gam(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "ML", data=D1)
+mod_g_2 <- gam(log(CPUE_nom+0.001) ~ Season.Ref + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "ML", data=D1)
+
+AIC(mod_g_new, mod_g_2) #smoothed term not needed, so do not use a gam...
+
+#determine random effect structure
+M_1 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + (1|ADFG.Number) + (1|Analysis.Area), data=D1, REML=F) #global with ranef and interactions
+M_2 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + ADFG.Number + (1|Analysis.Area), data=D1, REML=F)
+M_3 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + (1|ADFG.Number) + Analysis.Area, data=D1, REML=F)
+M_4 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + (1 + Season.Ref|ADFG.Number) + (1+ Season.Ref|Analysis.Area), data=D1, REML=F) #full model, this may take a really long time to run and not actually work out.
+M_5 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + (1|ADFG.Number) + (1+ Season.Ref|Analysis.Area), data=D1, REML=F)
+M_6 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + (1 + Season.Ref|ADFG.Number) + (1|Analysis.Area), data=D1, REML=F)
+M_7 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + ADFG.Number + (1 + Season.Ref|Analysis.Area), data=D1, REML=F) 
+M_8 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + (1+Season.Ref|ADFG.Number) + Analysis.Area, data=D1, REML=F) 
+M_9 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref * vessel_count_aa + Analysis.Area + (1|ADFG.Number), data=D1, REML=F) #no, cant account for the int effects
+M_10 <- lm(log(CPUE_nom+0.001) ~ Season.Ref * vessel_count_aa * ADFG.Number*Analysis.Area, data=D1) #fixef only with ALL the interaction effects
+M10_adjust <- lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D1)
+
+summary(M10_adjust)
+
+AIC(M_1, M_2, M_3, M_4, M_5, M_6, M_7, M_8, M_9, M_10)
+#for the record, based on theory I think that analysis area should be a random effect and MAYBE ADFG.ID as well
+##thing might get too complex once we start doing random slope, if anything has a random slope it should be Analysis.Area/
+
+#determine fixed effect structure HMM WHAT DID CURRY DO AGAIN?!?!?!
+
+AIC(M10_adjust, M_1, M_2, M_3) #the not random effects wins
+
+```
+Ok let's ignore ranefs and look at fixefs
+```{r}
+M10_adjust <- lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D1)
+
+#M11 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area+ Season.Ref:ADFG.Number, data=D1) #takes forever
+
+M12 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D1)
+
+M13 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number +Analysis.Area, data=D1)
+
+M14 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D1)
+
+AIC(M10_adjust, M12, M13, M14) #go with M12, there's interaction effects
+```
+
+
+Model residuals graph
+```{r}
+plot(M12)
+```
+
+
+
+Predicted results column
+```{r}
+predictions <- predict(M12, newdata = D1, type = "response", interval ="confidence", se.fit=T) #can I just use D1 as the new data or is that cheating
+#see line 808 of phils's Jig_BRF_CPUE code. he went with averaged dataset
+
+D1_new <- D1
+D1_new$pred <- exp(predictions$fit[,1])-0.001
+D1_new$lower_CI <- exp(predictions$fit[,2])-0.001
+D1_new$upper_CI <- exp(predictions$fit[,3]) -0.001
+D1_new$se <- exp(predictions$se.fit)-0.001
+
+head(D1_new)
+
+
+
+```
+
+
+
+Graphs
+
+Graph of standardized cpue
+
+
+other graph
+
+
+Combine
+

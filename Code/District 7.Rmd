@@ -37,7 +37,6 @@ D7 <- wrangled_shrimp %>% filter(Management_unit == "District 7") %>%
 
 unique(D7$Analysis.Area)
 
-getwd()
 ```
 
 
