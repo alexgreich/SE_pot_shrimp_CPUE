@@ -110,6 +110,17 @@ AIC(M10_adjust, M_1, M_2, M_3) #the not random effects wins
 
 
 ```
+
+
+Could use bam and bam syntax to cut down run time
+https://m-clark.github.io/posts/2019-10-20-big-mixed-models/
+```{r}
+mod_b_1 <- bam(log(CPUE_nom+0.001) ~ Season.Ref + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "ML", data=D1)
+mod_b_2 <- bam(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re")+
+                 s(Season.Ref, Analysis.Area, bs="re") + s(Season.Ref, ADFG.Number, bs="re"), method = "ML", data=D1, discrete=T, nthreads = 16)
+```
+
+
 Ok let's ignore ranefs and look at fixefs
 ```{r}
 M10_adjust <- lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D1)
@@ -122,10 +133,13 @@ M13 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number +Analysis.Area, data=D1
 
 M14 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D1)
 
-AIC(M10_adjust, M12, M13, M14, M15) #go with M12, there's interaction effects
+AIC(M10_adjust, M12, M13, M14) #go with M12, there's interaction effects
+
+summary(M12)
 ```
 
-Run these models overnight
+Run these models overnight- DO NOT RUN, 
+too many singularities
 ```{r}
 M15 <- lm(log(CPUE_nom+0.001) ~ Season.Ref * ADFG.Number * Analysis.Area, data=D1)
 #M16 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + Analysis.Area + ADFG.Number:Analysis.Area, data=D1
@@ -160,6 +174,18 @@ D1_new$upper_CI <- exp(predictions$fit[,3]) -0.001
 D1_new$se <- exp(predictions$se.fit)-0.001
 
 head(D1_new) #that my new dataset, with the standardized CPUE (backt tranformed predicted values)
+
+
+#predict results: cpue by year for D1
+coef(M12) #"extract your year coefs, those will be the annual index. Need to log-tranform them back?
+str(coef(M12))
+exp(coef(M12) + 0.001)
+#"Scale the coeffs to center on 1
+##soo then
+M12_adj <- lm(log(CPUE_nom+0.001) ~ 0 + Season.Ref + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D1) #remove the intercept
+###um, should I do it this way? Tyler had things a different way in teh scallop cpue stuff, mayve check that out? Something about changing the default option in lm
+summary(M12_adj)
+exp(coef(M12_adj) + 0.001)
 
 
 
