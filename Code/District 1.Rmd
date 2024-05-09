@@ -74,7 +74,7 @@ ggplot(D1) + aes(y= log(CPUE_nom+0.001), x=ADFG.Number) + geom_boxplot()
 
 ```
 
-Model selection DO NOT RUN
+Model selection DO NOT RUN (RUN OVERNIGHT. To tell me if I need random effects)
 ```{r}
 #throw a gam in there
 mod_g_new <- gam(log(CPUE_nom+0.001) ~ Season.Ref + s(vessel_count_aa, k=4) + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "ML", data=D1)
@@ -92,7 +92,7 @@ M_6 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vess
 M_7 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + ADFG.Number + (1 + Season.Ref|Analysis.Area), data=D1, REML=F) 
 M_8 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + (1+Season.Ref|ADFG.Number) + Analysis.Area, data=D1, REML=F) 
 M_9 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref * vessel_count_aa + Analysis.Area + (1|ADFG.Number), data=D1, REML=F) #no, cant account for the int effects
-M_10 <- lm(log(CPUE_nom+0.001) ~ Season.Ref * vessel_count_aa * ADFG.Number*Analysis.Area, data=D1) #fixef only with ALL the interaction effects
+M_10 <- lm(log(CPUE_nom+0.001) ~ Season.Ref * vessel_count_aa * ADFG.Number*Analysis.Area, data=D1) #fixef only with ALL the interaction effects #M15, same as
 M10_adjust <- lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D1)
 
 summary(M10_adjust)
@@ -104,6 +104,10 @@ AIC(M_1, M_2, M_3, M_4, M_5, M_6, M_7, M_8, M_9, M_10)
 #determine fixed effect structure HMM WHAT DID CURRY DO AGAIN?!?!?!
 
 AIC(M10_adjust, M_1, M_2, M_3) #the not random effects wins
+
+
+############
+
 
 ```
 Ok let's ignore ranefs and look at fixefs
@@ -118,13 +122,28 @@ M13 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number +Analysis.Area, data=D1
 
 M14 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D1)
 
-AIC(M10_adjust, M12, M13, M14) #go with M12, there's interaction effects
+AIC(M10_adjust, M12, M13, M14, M15) #go with M12, there's interaction effects
 ```
+
+Run these models overnight
+```{r}
+M15 <- lm(log(CPUE_nom+0.001) ~ Season.Ref * ADFG.Number * Analysis.Area, data=D1)
+#M16 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + Analysis.Area + ADFG.Number:Analysis.Area, data=D1
+#stats::step(M12) #test
+stats::step(M15)
+summary(M15)
+
+AIC(M12, M15)
+
+```
+
+
 
 
 Model residuals graph
 ```{r}
 plot(M12)
+plot(M15)
 ```
 
 
@@ -135,12 +154,12 @@ predictions <- predict(M12, newdata = D1, type = "response", interval ="confiden
 #see line 808 of phils's Jig_BRF_CPUE code. he went with averaged dataset
 
 D1_new <- D1
-D1_new$pred <- exp(predictions$fit[,1])-0.001
+D1_new$std_CPUE <- exp(predictions$fit[,1])-0.001
 D1_new$lower_CI <- exp(predictions$fit[,2])-0.001
 D1_new$upper_CI <- exp(predictions$fit[,3]) -0.001
 D1_new$se <- exp(predictions$se.fit)-0.001
 
-head(D1_new)
+head(D1_new) #that my new dataset, with the standardized CPUE (backt tranformed predicted values)
 
 
 
