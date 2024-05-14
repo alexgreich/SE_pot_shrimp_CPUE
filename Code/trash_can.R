@@ -236,3 +236,24 @@ library(MASS)
 stepAIC()
 ```
 
+#DISTRICT 1
+Could use bam and bam syntax to cut down run time
+https://m-clark.github.io/posts/2019-10-20-big-mixed-models/
+```{r}
+mod_b_1 <- bam(log(CPUE_nom+0.001) ~ Season.Ref + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "ML", data=D1)
+mod_b_2 <- bam(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re")+
+                 s(Season.Ref, Analysis.Area, bs="re") + s(Season.Ref, ADFG.Number, bs="re"), method = "ML", data=D1, discrete=T, nthreads = 16)
+```
+
+Run these models overnight- DO NOT RUN, 
+too many singularities
+```{r}
+M15 <- lm(log(CPUE_nom+0.001) ~ Season.Ref * ADFG.Number * Analysis.Area, data=D1)
+#M16 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + Analysis.Area + ADFG.Number:Analysis.Area, data=D1
+#stats::step(M12) #test
+stats::step(M15)
+summary(M15)
+
+AIC(M12, M15)
+
+```

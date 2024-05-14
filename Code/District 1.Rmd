@@ -73,7 +73,7 @@ ggplot(D1) + aes(y= log(CPUE_nom+0.001), x=ADFG.Number) + geom_boxplot()
 
 
 ```
-
+TO DELETE
 Model selection DO NOT RUN (RUN OVERNIGHT. To tell me if I need random effects)
 ```{r}
 #throw a gam in there
@@ -113,53 +113,64 @@ M_11 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:ves
 ```
 
 
-Could use bam and bam syntax to cut down run time
-https://m-clark.github.io/posts/2019-10-20-big-mixed-models/
-```{r}
-mod_b_1 <- bam(log(CPUE_nom+0.001) ~ Season.Ref + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re"), method = "ML", data=D1)
-mod_b_2 <- bam(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + s(Analysis.Area, bs="re") + s(ADFG.Number, bs="re")+
-                 s(Season.Ref, Analysis.Area, bs="re") + s(Season.Ref, ADFG.Number, bs="re"), method = "ML", data=D1, discrete=T, nthreads = 16)
-```
-
 
 Ok let's ignore ranefs and look at fixefs
 ```{r}
-M10_adjust <- lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D1)
+M10 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D1)
 
 #M11 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area+ Season.Ref:ADFG.Number, data=D1) #takes forever
 
-M12 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D1)
+M12 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + Analysis.Area + Season.Ref:Analysis.Area, data=D1)
 
 M13 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number +Analysis.Area, data=D1)
 
 M14 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D1)
 
-AIC(M10_adjust, M12, M13, M14) #go with M12, there's interaction effects
+M_null <- lm(log(CPUE_nom+0.001) ~ Season.Ref+ Analysis.Area, data=D1)
 
-summary(M12)
+AIC(M10, M12, M13, M14, M_null) #go with M12, there's interaction effects
+#says that vessel count does not matter...
+
+
+#ok can breifly test ranefs
+M_1 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:Analysis.Area + Analysis.Area + (1|ADFG.Number), data=D1, REML=F)
+
+
+M_1.2 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + Season.Ref:Analysis.Area + Analysis.Area + (1|ADFG.Number), data=D1, REML=F)
+#global with ranef and interactions
+M_2 <-  lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:Analysis.Area + Analysis.Area + ADFG.Number, data=D1)
+
+#the in effects as ranefs (might take forever to run)
+##RUN M_3 overnight!!
+M_3 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Analysis.Area + ADFG.Number + (Season.Ref|Analysis.Area), data=D1, REML=F)
+
+AIC(M_1, M_2, M_3) #m2 wins, no ranefs
+
 ```
 
-Run these models overnight- DO NOT RUN, 
-too many singularities
+
+Predictions
 ```{r}
-M15 <- lm(log(CPUE_nom+0.001) ~ Season.Ref * ADFG.Number * Analysis.Area, data=D1)
-#M16 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + Analysis.Area + ADFG.Number:Analysis.Area, data=D1
-#stats::step(M12) #test
-stats::step(M15)
-summary(M15)
+#make newdata
 
-AIC(M12, M15)
+table(D1$ADFG.Number)
+
+
+std_dat<- expand.grid(Season.Ref = unique(D1$Season.Ref), #do I need to extrapolate for areas/years taht do not exist??
+                              Analysis.Area = unique(D1$Analysis.Area),
+                              #Hooks = round(mean(cpue_dat$Hooks),0), 
+                              #Line_no = 2, #mean(cpue_dat$Line_no) unique(cpue_dat$Line_no)
+                              ADFG.Number = unique(D1$ADFG.Number) #71619 appears 411 times. 33175 appears 408 times. The MODE
+                      )
+
+pred_cpue <- predict(M12, std_dat, type = "response", se = TRUE) #does have the doubtful cases error, with both 71619  and 33175
+pred_cpue <- predict(M12, D1) #works with D1. Hmm. Does it have something to do with the vessel I chose?
+predict(M12) #does not have the doubtful cases error 
+body(pred_cpue)
 
 ```
 
 
-
-
-Model residuals graph
-```{r}
-plot(M12)
-plot(M15)
-```
 
 
 
