@@ -1,0 +1,86 @@
+---
+title: "District 2"
+author: "Alex Reich"
+date: "2024-05-14"
+output: html_document
+---
+Set the wd for this rmd
+```{r, setup, include=FALSE}
+knitr::opts_knit$set(root.dir = 'C:/Users/agreich/OneDrive - State of Alaska/Desktop/Shrimp/Shrimp tickets (pot shrimp)/SE_pot_shrimp_CPUE')
+```
+
+
+Load libraries
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(cowplot)
+library(viridis)
+library(RColorBrewer)
+library(mgcv)
+```
+
+
+Load the data and select for D1
+```{r}
+wrangled_shrimp <- read.csv("Data/wrangled shrimp focus years.csv")
+D2 <- wrangled_shrimp %>% filter(Management_unit == "District 2") %>%
+  mutate(Analysis.Area = factor(Analysis.Area),
+         ADFG.Number = factor(ADFG.Number),
+         Season.Ref = factor(Season.Ref)
+         )#make things factors for the gams
+
+unique(D2$Analysis.Area)
+
+```
+
+
+Exploratory data analysis
+```{r}
+
+```
+
+
+Add area weights for model selection
+- see pg 113 of campbell 2015
+- Nobs(total # of observations)/Nstrata(which is Nyear*Nanalysisarea) * 1/# observations in the analysis area within the year and region (??)
+- or Eobs/Nstrata * 1/e_ijk THIS ONE.
+- how to weight??
+- I do not get this.
+```{r}
+
+```
+
+
+Model selection
+- check if interaction between year and area
+- campbell 2015 says use gamma with log link instead of gaussian with log link. Try both.
+- area and yera should be fixefs, but test vessel ID as ranef (it will probs also be a fixef)
+- consider adding the year:area interaction as a ranef (which would be the slope, not int I think)
+-- run that overnight
+```{r}
+
+```
+
+Model reiduals
+```{r}
+
+```
+
+
+Calculate standarized cpue with predict() and newdata
+- use mode of vessel for the vessel effect, but check the mode of the vessel in all of the areas
+- see tyler email about setting up newdata
+```{r}
+
+```
+
+Graphs
+```{r}
+
+```
+
+Total std CPUE in region 1 per year (later, once all calc'ed)
+sum(area_k*CPUE_ik) where i is each year and k is each area
+
+Average b

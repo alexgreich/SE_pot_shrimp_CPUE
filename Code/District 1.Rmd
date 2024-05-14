@@ -107,6 +107,7 @@ AIC(M10_adjust, M_1, M_2, M_3) #the not random effects wins
 
 
 ############
+M_11 <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:vessel_count_aa + (0 + Season.Ref|ADFG.Number) + (0+ Season.Ref|Analysis.Area), data=D1, REML=F) #try this one
 
 
 ```
@@ -163,6 +164,8 @@ plot(M15)
 
 
 Predicted results column
+Check out line 138 of https://github.com/commfish/BSAI_crab_assessments/blob/master/AIGKC/code/aigkc_functions.R
+for a get_cpue function. Has SE adjust and... centers on 1. IDK if I should do that.
 ```{r}
 predictions <- predict(M12, newdata = D1, type = "response", interval ="confidence", se.fit=T) #can I just use D1 as the new data or is that cheating
 #see line 808 of phils's Jig_BRF_CPUE code. he went with averaged dataset
