@@ -69,6 +69,44 @@ summary(m_glob_r)
 
 
 
+Model diagnostics
+
+```{r}
+#wil tyler's funciton work for me?
+f_diagnostics <- function(x) {
+  
+  # qq plot
+  ggplot()+
+    stat_qq_line(aes(sample = resid(x, type = "deviance")), color = 2)+
+    stat_qq(aes(sample = resid(x, type = "deviance")))+
+    labs(x = "Theorical Quantiles", y = "Deviance Residuals", title = "Q-Q plot") -> p1
+  
+  # historgam
+  ggplot()+
+    geom_histogram(aes(x =  resid(x, type = "deviance")))+
+    labs(x = "Residuals", y = "Count", title = "Histogram of residuals") -> p2
+  
+  # resid
+  ggplot()+
+    geom_point(aes(x = x$linear.predictors, y = resid(x, type = "deviance")))+
+    geom_hline(yintercept = 0, linetype = 2)+
+    labs(x = "Linear Predictor", y = "Residuals", title = "Resids. vs linear pred.") -> p3
+  
+  # resid vs fitted 
+  ggplot()+
+    geom_point(aes(x = x$fitted.values, y = x$model$cpue))+
+    labs(x = "Fitted Values", y = "Response Values", title = "Response vs. Fitted") -> p4
+  
+  
+  (p1 + p2) / (p3 + p4)
+  
+}
+#end tyler's function
+
+f_diagnostics(m_glob6)
+```
+
+
 #m_extra_nesting
 
 

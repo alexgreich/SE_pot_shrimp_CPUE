@@ -291,60 +291,70 @@ m_glob6_IR <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.R
 
 ```
 
-Model diagnostics
 
-```{r}
-#wil tyler's funciton work for me?
-f_diagnostics <- function(x) {
-  
-  # qq plot
-  ggplot()+
-    stat_qq_line(aes(sample = resid(x, type = "deviance")), color = 2)+
-    stat_qq(aes(sample = resid(x, type = "deviance")))+
-    labs(x = "Theorical Quantiles", y = "Deviance Residuals", title = "Q-Q plot") -> p1
-  
-  # historgam
-  ggplot()+
-    geom_histogram(aes(x =  resid(x, type = "deviance")))+
-    labs(x = "Residuals", y = "Count", title = "Histogram of residuals") -> p2
-  
-  # resid
-  ggplot()+
-    geom_point(aes(x = x$linear.predictors, y = resid(x, type = "deviance")))+
-    geom_hline(yintercept = 0, linetype = 2)+
-    labs(x = "Linear Predictor", y = "Residuals", title = "Resids. vs linear pred.") -> p3
-  
-  # resid vs fitted 
-  ggplot()+
-    geom_point(aes(x = x$fitted.values, y = x$model$cpue))+
-    labs(x = "Fitted Values", y = "Response Values", title = "Response vs. Fitted") -> p4
-  
-  
-  (p1 + p2) / (p3 + p4)
-  
-}
-#end tyler's function
 
-f_diagnostics(m_glob6)
-```
-
-Alex diagnostics
+Model selection 5/15/24
 ```{r}
 
-plot(m_glob6_IR)
-plot(m_glob6)
-lmerTest::step(m_glob6)
-lmerTest::step(m_glob6_I)
-lmerTest::step(m_glob6_IR)
-
-#step(m_glob6)
-
-summary(m_glob6_IR)
-ranef(m_glob6_IR)
+#ok can breifly test ranefs
+M_ranef <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:Analysis.Area + Analysis.Area + (1|ADFG.Number), data=D7, REML=F)
 
 
+M_noranef <-  lm(log(CPUE_nom+0.001) ~ Season.Ref +vessel_count_aa + ADFG.Number + Season.Ref:Analysis.Area + Analysis.Area, data=D7)
+AIC(M_ranef, M_noranef) #no ranefs
+
+summary(M_ranef)
+
+
+
+#global with ranef and interactions
+
+M2 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + ADFG.Number +Analysis.Area + Season.Ref:Analysis.Area, data=D7)
+
+M3 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number + Analysis.Area + Season.Ref:Analysis.Area, data=D7)
+
+M4 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + ADFG.Number +Analysis.Area, data=D7)
+
+M5 <- lm(log(CPUE_nom+0.001) ~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D7)
+
+M_null <- lm(log(CPUE_nom+0.001) ~ Season.Ref+ Analysis.Area, data=D7)
+
+AIC(M2, M3, M4, M5, M_null) #M3 wins
+#says that vessel count does not matter...
+
+
+summary(M3)
 
 ```
+
+Need  impue values before the predict step. Also, test models again with impued values.
+```{r}
+
+```
+
+
+
+Predict 5/15/24
+```{r}
+table(D7$ADFG.Number)
+
+
+std_dat<- expand.grid(Season.Ref = unique(D7$Season.Ref), #do I need to extrapolate for areas/years taht do not exist??
+                              Analysis.Area = unique(D7$Analysis.Area), #does not like east behm canal
+                              #Hooks = round(mean(cpue_dat$Hooks),0), 
+                              #Line_no = 2, #mean(cpue_dat$Line_no) unique(cpue_dat$Line_no)
+                              ADFG.Number = factor(52131) #52131 appears 399 times.
+                      )
+
+pred_cpue <- predict(M3, std_dat, type = "response", se = TRUE) #does have the doubtful cases error, with both 71619  and 33175
+#oh so it works for M13 but not for M12?
+
+
+#OR, what if I just skipped the years:area combinations taht dont exist? Do I need to predict for those?!!!!!!!!!!!
+##cant I just predict for the situations where CPUE DOES exist??
+
+```
+
 
 Standardized (predicted)  CPUE
 (from internet: Note I predict the log version as exp(predict(m) + sigma^2/2) because $E exp(X) = exp(mu + sigma^2)$ where $X \sim N(0, sigma^2)$. (This changes little here though.))

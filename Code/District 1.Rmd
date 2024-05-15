@@ -132,6 +132,9 @@ AIC(M10, M12, M13, M14, M_null) #go with M12, there's interaction effects
 #says that vessel count does not matter...
 
 
+summary(M12)
+##is boca de quadra missing in some years? Do I need to fill this in??
+
 #ok can breifly test ranefs
 M_1 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:Analysis.Area + Analysis.Area + (1|ADFG.Number), data=D1, REML=F)
 
@@ -142,11 +145,15 @@ M_2 <-  lm(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.Ref:Analy
 
 #the in effects as ranefs (might take forever to run)
 ##RUN M_3 overnight!!
-M_3 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Analysis.Area + ADFG.Number + (Season.Ref|Analysis.Area), data=D1, REML=F)
-
-AIC(M_1, M_2, M_3) #m2 wins, no ranefs
+#M_3 <-  lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Analysis.Area + ADFG.Number + (Season.Ref|Analysis.Area), data=D1, REML=F)
+##singularities :(
+AIC(M_1, M_2) #m2 wins, no ranefs
 
 ```
+
+Having issues with predictions
+- predictdoes not work when East Behm Canal, Boca de Quadra, Revilla Channel/Gravina is included, I think becasue that one has missing years. How to fix that??
+----that is because those areas are missing years of data. I need to extrapolate in those years of data
 
 
 Predictions
@@ -157,14 +164,15 @@ table(D1$ADFG.Number)
 
 
 std_dat<- expand.grid(Season.Ref = unique(D1$Season.Ref), #do I need to extrapolate for areas/years taht do not exist??
-                              Analysis.Area = unique(D1$Analysis.Area),
+                              Analysis.Area = factor("Revilla Channel/Gravina"), #unique(D1$Analysis.Area), #does not like east behm canal
                               #Hooks = round(mean(cpue_dat$Hooks),0), 
                               #Line_no = 2, #mean(cpue_dat$Line_no) unique(cpue_dat$Line_no)
-                              ADFG.Number = unique(D1$ADFG.Number) #71619 appears 411 times. 33175 appears 408 times. The MODE
+                              ADFG.Number = factor(71619) #71619 appears 411 times. 33175 appears 408 times. The MODE
                       )
 
 pred_cpue <- predict(M12, std_dat, type = "response", se = TRUE) #does have the doubtful cases error, with both 71619  and 33175
-pred_cpue <- predict(M12, D1) #works with D1. Hmm. Does it have something to do with the vessel I chose?
+#oh so it works for M13 but not for M12?
+pred_cpue <- predict(M12, D1) #works with D1. Hmm. Does it have something to do with the vessel I chose?. Nope, when I expand grid over all vessels it is still unhappy. But its fine when I use the OG dataset
 predict(M12) #does not have the doubtful cases error 
 body(pred_cpue)
 
