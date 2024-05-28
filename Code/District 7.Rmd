@@ -152,56 +152,33 @@ D7$logCPUE <- log(D7$CPUE_nom + 0.001)
 #impute values so we dont have missing year:stat area problems
 library(mice)
 
-#expand dataset so that the NA's are where I want them...?
-##is just one value between yera and analysis area enough?
-##I'll take the mean of each analysis area, and get missing values too
-temp1 <- D7 %>%
-  group_by(Season.Ref, Analysis.Area) %>%
-  summarise(logCPUE_mean = mean(logCPUE)) #mean of nominal or... logged cpue?
 
+
+##################################################################################################
+#lets try imputing data for area:year wihtout imputing for every single damn boat
 temp2 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
                        Analysis.Area = unique(D7$Analysis.Area)
                       )
+D7_sub2 <- full_join(D7_sub, temp2)
+#make missing values for ADFG.Number the mode
+which.max(table(D7_sub2$ADFG.Number)) #52131
 
-temp3 <- full_join(temp2, temp1)
-#View(temp3) #now I have my averages with my NA's
+mode_boat <- which.max(table(D7$ADFG.Number))
 
-#alt method: I could do by vessel, impute as well; need to weight the only 1 value for the missing values somehow.
+mode_val <- names(mode_boat)
 
-#use mice
+D7_sub3 <- D7_sub2 %>%
+  #mutate(ADFG.Number = ifelse(is.na(ADFG.Number), mode_val, ADFG.Number)) #replacing NA with the mode fishing vessel
+  mutate(ADFG.Number = replace_na(ADFG.Number, mode_val)) #replace_na(list(ADFG.Number = mode_val)))
 
-md.pattern(temp3)
+#now impute
+md.pattern(D7_sub3)
+imp <- mice(data = D7_sub3, m=1, maxit=1 ) #Ppm method
+D7_imputated <- complete(imp)
+View(complete(mice(data = D7_sub3, m=1, maxit=1, method="mean" )))
+View(complete(mice(data = D7_sub3, m=5, maxit=5)))
 
-imp <- mice(data=temp3, method= "mean", m=1, maxit=1 )
-imp2 <- complete(imp) #imputed data
- 
-#now put imputed data back in the dataframe, with the mode vessel?
-
-
-
-#I could also impute the missing value with ALLL of the vessels, years, analysis areas in a district... might be extra though
-temp5 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
-                       Analysis.Area = unique(D7$Analysis.Area),
-                      ADFG.Number = unique(D7$ADFG.Number)
-                      )
-D7_sub <- D7 %>% select(Season.Ref, Analysis.Area, ADFG.Number, logCPUE)
-
-temp6 <- full_join(temp5, D7_sub)
-
-md.pattern(temp6)
-
-
-imp3 <- mice(data=temp6, method="mean", m=1, maxit=1) #maybe try diff method: "norm.nob"?
-imp3.5 <- mice(data=temp6, m=1, maxit=1)
-
-imp4 <-complete(imp3)
-View(imp4) #ALL missing values are 1.04??
-View(complete(imp3.5)) #IDK what method we used here but looks better than the mean method -> pmm, predictive mean matching
-
-
-#oh wait, try imputing for just some columns but not others. I can do that I think
-##in the method specification of mice()
-##can add na for just the missing combination of year and analysis area, impue for that
+#ok I've been playing around with imputing methods.
 ```
 
 

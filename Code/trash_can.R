@@ -484,3 +484,55 @@ m_glob6_IR <- lmer(log(CPUE_nom+0.001) ~ Season.Ref + vessel_count_aa + Season.R
 
 
 ```
+
+#on imputing:
+#expand dataset so that the NA's are where I want them...?
+##is just one value between yera and analysis area enough?
+##I'll take the mean of each analysis area, and get missing values too
+temp1 <- D7 %>%
+  group_by(Season.Ref, Analysis.Area) %>%
+  summarise(logCPUE_mean = mean(logCPUE)) #mean of nominal or... logged cpue?
+
+temp2 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
+                     Analysis.Area = unique(D7$Analysis.Area)
+)
+
+temp3 <- full_join(temp2, temp1)
+#View(temp3) #now I have my averages with my NA's
+
+#alt method: I could do by vessel, impute as well; need to weight the only 1 value for the missing values somehow.
+
+#use mice
+
+md.pattern(temp3)
+
+imp <- mice(data=temp3, method= "mean", m=1, maxit=1 )
+imp2 <- complete(imp) #imputed data
+
+#now put imputed data back in the dataframe, with the mode vessel?
+
+
+
+#I could also impute the missing value with ALLL of the vessels, years, analysis areas in a district... might be extra though
+temp5 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
+                     Analysis.Area = unique(D7$Analysis.Area),
+                     ADFG.Number = unique(D7$ADFG.Number)
+)
+D7_sub <- D7 %>% select(Season.Ref, Analysis.Area, ADFG.Number, logCPUE)
+
+temp6 <- full_join(temp5, D7_sub)
+
+md.pattern(temp6)
+
+
+imp3 <- mice(data=temp6, method="mean", m=1, maxit=1) #maybe try diff method: "norm.nob"?
+imp3.5 <- mice(data=temp6, m=1, maxit=1)
+
+imp4 <-complete(imp3)
+#View(imp4) #ALL missing values are 1.04??
+imp5 <- complete(imp3.5) #IDK what method we used here but looks better than the mean method -> pmm, predictive mean matching
+
+
+#oh wait, try imputing for just some columns but not others. I can do that I think
+##in the method specification of mice()
+##can add na for just the missing combination of year and analysis area, impue for that
