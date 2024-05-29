@@ -188,7 +188,7 @@ D7_filled_2 <- D7_filled_2 %>%
 
 ggplot(D7_filled_2) + aes(x=Season.Ref, y=logCPUE) + geom_point() + facet_wrap(~Analysis.Area)
 
-  #ok, that looks good
+  #ok, that looks good,
   
   
 ```
@@ -197,6 +197,40 @@ ggplot(D7_filled_2) + aes(x=Season.Ref, y=logCPUE) + geom_point() + facet_wrap(~
 
 5/28/24: weights on areas (the size of the analysis areas when modeling!! see if you can remove the bias of additional data)
 Model selection after imputation
+```{r}
+#D7_filled_2 is my dataframe
+#import areas of .... stat areas
+## from an R standpoint, it will be messy and full of NA's
+areas_raw <- read.csv("Data/Southeast_Shrimp_StatArea_SqMiles.csv")
+names(areas_raw)
+areas_D7 <- areas_raw %>% #from the messy dataset
+  select(DISTRICT_CODE, STAT_AREA_NAME, STAT_AREA, Area_SqMiles) %>% #choose the columns I care about
+  filter(DISTRICT_CODE == 107) #%>% #I only care about District 7 right now
+  #group_by(S)
+
+View(areas_D7)
+
+U_ern_sound <- areas_D7 %>% filter(STAT_AREA == 10720) %>%
+  summarise(area=sum(Area_SqMiles))
+L_ern_sound <- areas_D7 %>% filter(STAT_AREA == 10710) %>%
+  summarise(area=sum(Area_SqMiles))
+Zim_st <- areas_D7 %>% filter(STAT_AREA == 10730|STAT_AREA == 10735) %>%
+  summarise(area=sum(Area_SqMiles))
+Brad_Can <- areas_D7 %>% filter(STAT_AREA == 10740|STAT_AREA == 10745) %>%
+  summarise(area=sum(Area_SqMiles))
+
+#ugh that was tedious
+##at least I have my areas now
+
+
+
+#combine stat area weights into analysis areas
+
+
+```
+
+
+
 
 Predict 5/15/24
 ```{r}
