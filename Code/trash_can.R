@@ -536,3 +536,74 @@ imp5 <- complete(imp3.5) #IDK what method we used here but looks better than the
 #oh wait, try imputing for just some columns but not others. I can do that I think
 ##in the method specification of mice()
 ##can add na for just the missing combination of year and analysis area, impue for that
+
+
+
+#D7 imputation
+Impute values, and get values in log-space
+Uncertainty: the method I chose for this.
+```{r}
+D7$logCPUE <- log(D7$CPUE_nom + 0.001)
+
+#impute values so we dont have missing year:stat area problems
+library(mice)
+
+
+
+##################################################################################################
+#lets try imputing data for area:year wihtout imputing for every single damn boat
+temp2 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
+                     Analysis.Area = unique(D7$Analysis.Area)
+)
+D7_sub <- D7 %>% select(Season.Ref, Analysis.Area, ADFG.Number, logCPUE)
+D7_sub2 <- full_join(D7_sub, temp2)
+#make missing values for ADFG.Number the mode
+which.max(table(D7_sub2$ADFG.Number)) #52131
+
+mode_boat <- which.max(table(D7$ADFG.Number))
+
+mode_val <- names(mode_boat)
+
+D7_sub3 <- D7_sub2 %>%
+  #mutate(ADFG.Number = ifelse(is.na(ADFG.Number), mode_val, ADFG.Number)) #replacing NA with the mode fishing vessel
+  mutate(ADFG.Number = replace_na(ADFG.Number, mode_val)) #replace_na(list(ADFG.Number = mode_val)))
+
+#now impute
+md.pattern(D7_sub3)
+imp <- mice(data = D7_sub3, m=1, maxit=1 ) #Ppm method
+D7_imputated <- complete(imp)
+View(complete(mice(data = D7_sub3, m=1, maxit=1, method="mean" )))
+imp2 <- mice(data = D7_sub3, m=5, seed=444)
+
+#following the vignette, experimenting
+imp2$predictorMatrix #the...predictor matrix
+plot(imp2) #neat. why do I not have an SD? probs because I just imputed one value in this case?
+imp2$method #says the method of imputation for the only column I imputed (logCPUE)
+
+#try using more iterations, just because(5 should be fine tho)
+imp40 <- mice.mids(imp2, maxit=35, print=F)
+plot(imp40) #neat
+
+#stripplot
+stripplot(imp2)
+fit_imp <- with(imp2, lm()) #um.... can do my cpue standardization right here I guess #https://www.gerkovink.com/miceVignettes/Convergence_pooling/Convergence_and_pooling.html
+imp2_pool <- pool(fit_imp)
+#I dont think I will do the above step. I think I will use complete(imp2) to get my dataset, and roll to model selection from there.
+
+#consider adding vessel # to the impued value? no...?
+
+
+#experiment: multilevel imputation: group by area/year??
+
+```
+
+D7_filled <- D7_sub3 %>%
+  group_by(Analysis.Area) %>% #needs to pick up on the last known value (the prior season... the mean from the prior season)... not sure if it will
+  #get it to pick up the mean from the prior season, over all vessels
+  tidyr::fill(logCPUE) %>% #um, this should fill in the missing value....
+  ungroup()#fills in the last known value- I need to make sure it fills in last known value for the Analysis area and 
+#that should do it. Plot to make sure
+ggplot(D7_filled) + aes(x=Season.Ref, y=logCPUE) + geom_point() + facet_wrap(~Analysis.Area)
+ggplot(D7_sub3) + aes(x=Season.Ref, y=logCPUE) + geom_point() + facet_wrap(~Analysis.Area)
+
+#fill, group by year, have the missing value be the average logCPue of the past year
