@@ -107,6 +107,10 @@ corrplot(cor_prep)
 ```
 
 
+Drop the outlier, perhaps
+```{r}
+D7 <- D7 %>% filter(CPUE_nom < 100) #gonna assume that is an outlier
+```
 
 
 
@@ -159,6 +163,7 @@ library(mice)
 temp2 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
                        Analysis.Area = unique(D7$Analysis.Area)
                       )
+D7_sub <- D7 %>% select(Season.Ref, Analysis.Area, ADFG.Number, logCPUE)
 D7_sub2 <- full_join(D7_sub, temp2)
 #make missing values for ADFG.Number the mode
 which.max(table(D7_sub2$ADFG.Number)) #52131
@@ -176,11 +181,27 @@ md.pattern(D7_sub3)
 imp <- mice(data = D7_sub3, m=1, maxit=1 ) #Ppm method
 D7_imputated <- complete(imp)
 View(complete(mice(data = D7_sub3, m=1, maxit=1, method="mean" )))
-View(complete(mice(data = D7_sub3, m=5, maxit=5)))
+imp2 <- mice(data = D7_sub3, m=5, seed=444)
 
-#ok I've been playing around with imputing methods.
+#following the vignette, experimenting
+imp2$predictorMatrix #the...predictor matrix
+plot(imp2) #neat. why do I not have an SD? probs because I just imputed one value in this case?
+imp2$method #says the method of imputation for the only column I imputed (logCPUE)
+
+#try using more iterations, just because(5 should be fine tho)
+imp40 <- mice.mids(imp2, maxit=35, print=F)
+plot(imp40) #neat
+
+#stripplot
+stripplot(imp2)
+fit_imp <- with(imp2, lm()) #um.... can do my cpue standardization right here I guess #https://www.gerkovink.com/miceVignettes/Convergence_pooling/Convergence_and_pooling.html
+imp2_pool <- pool(fit_imp)
+#I dont think I will do the above step. I think I will use complete(imp2) to get my dataset, and roll to model selection from there.
+
+#consider adding vessel # to the impued value? no...?
 ```
-
+5/28/24: weights on areas (the size of the analysis areas when modeling!! see if you can remove the bias of additional data)
+Model selection after imputation
 
 Predict 5/15/24
 ```{r}
