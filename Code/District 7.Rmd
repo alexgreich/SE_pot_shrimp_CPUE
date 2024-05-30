@@ -335,24 +335,125 @@ See: https://stats.stackexchange.com/questions/115571/back-transforming-regressi
 
 Analysis and model testing: individual analysis areas
 ```{r}
-#Bradfield canal
+#separate datasets (use the datasets where missing values already filled)
+Ernest_U <- D7 %>% filter(Analysis.Area == "Upper Ernest Sound")
+Ernest_L <- D7_filled_3 %>% filter(Analysis.Area == "Lower Ernest Sound")
+Bradfield <- D7_filled_3 %>% filter(Analysis.Area == "Bradfield Canal")
+Zim <- D7_filled_3 %>% filter(Analysis.Area == "Zimovia Strait")
 
-#Lower ernest sound
+#model testing per dataset (use step...?)
+ErnestU_mod1 <- lm(logCPUE ~ Season.Ref + ADFG.Number + vessel_count_aa, Ernest_U)
+step_EU <- step(ErnestU_mod1) #gets rid of vessel effect
 
-#upper ernest sound
+ErnestL_mod1 <- lm(logCPUE ~ Season.Ref + ADFG.Number, Ernest_L)
+step_EL <- step(ErnestL_mod1)
 
-#Zimovia strait
+Brad_mod1 <- lm(logCPUE ~ Season.Ref + ADFG.Number, Bradfield)
+step_brad<-step(Brad_mod1)
 
+Zim_mod1 <- lm(logCPUE ~ Season.Ref + ADFG.Number, Zim)
+step_zim<-step(Zim_mod1)
+
+#predictions
+##u enrest
+D7_pred <- function(DATA, MODE_VESSEL, MODEL){
+std_dat<- expand.grid(Season.Ref = unique(DATA$Season.Ref),
+                              Analysis.Area = unique(DATA$Analysis.Area), 
+                              ADFG.Number = factor(MODE_VESSEL) #maybe pick mode vessel for this area. This is the mode vessel for D7 overall
+                      )
+pred_logcpue <- predict(MODEL, std_dat, type = "response", se = TRUE) 
+ln_mu = pred_logcpue$fit
+ln_sigma = pred_logcpue$se.fit
+
+std_dat %>% 
+   mutate(
+          ln_mu=ln_mu,
+          mu = exp(ln_mu + (ln_sigma^2)/2),
+          sigma = sqrt((exp(ln_sigma^2) - 1) * exp(2*ln_mu + ln_sigma^2)), #make sure is right
+          upper= mu + 2*sigma,
+          lower = mu - 2*sigma
+   ) -> pred_dat_biascorrected
+
+return(pred_dat_biascorrected)
+
+}
+
+#max boat
+mode_boat <- which.max(table(D7$ADFG.Number))
+
+mode_val <- names(mode_boat)
+
+EL_mode_boat <- names(which.max(table(Ernest_L$ADFG.Number)))
+brad_mode_boat <- names(which.max(table(Bradfield$ADFG.Number)))
+zim_mode_boat<- names(which.max(table(Zim$ADFG.Number)))
+#function in action
+
+EU_pred <- D7_pred(DATA=Ernest_U, MODE_VESSEL = 52131, MODEL = step_EU)
+EL_pred <- D7_pred(DATA=Ernest_L, MODE_VESSEL = 71757, MODEL = step_EL) #why do you not work
+Brad_pred <- D7_pred(DATA=Bradfield, MODE_VESSEL = 14980, MODEL = step_brad)
+Zim_pred <- D7_pred(DATA=Zim, MODE_VESSEL = 70552, MODEL = step_brad)
+
+comb_D7 <- rbind(EU_pred, Brad_pred, Zim_pred) #EL_pred is being finicky
+#comb_D7 <- rbind(comb_D7, Zim_pred)
+
+
+#oh wait. I can just take the coeffs per year... right? since there are no interactions
+#maybe not via the method I chose tho
+
+#plot
 
 ```
 
 Comparison graphs
 ```{r}
+#D7 master
 ggplot(pred_dat_biascorrected) + aes(x=Season.Ref, y=mu) +geom_errorbar(aes(ymin=lower, ymax=upper))+ geom_point() + geom_line(aes(group=Analysis.Area)) + facet_wrap(~Analysis.Area)
+
+#overall D7 cpue #ok need to work on... sum the cpue's by area to get the total cpue's per year.. what about the error here tho?
+#ggplot(pred_dat_biascorrected) + aes(x=Season.Ref, y=mean(mu)) +geom_errorbar(aes(ymin=lower, ymax=upper))+ geom_point() + geom_line()
+
+#individual separations
+ggplot(comb_D7) + aes(x=Season.Ref, y=mu) +
+  geom_errorbar(aes(ymin=lower, ymax=upper))+ 
+  geom_point() + geom_line(aes(group=Analysis.Area)) + facet_wrap(~Analysis.Area) 
+
+##########################3
+#just look at upper ernest
+ern_u_from_large_D7 <- pred_dat_biascorrected %>% filter(Analysis.Area =="Upper Ernest Sound")
+ggplot(ern_u_from_large_D7) + aes(x=Season.Ref, y=mu) +geom_errorbar(aes(ymin=lower, ymax=upper))+ geom_point() + geom_line(aes(group=Analysis.Area))# + facet_wrap(~Analysis.Area)
+
+ggplot(EU_pred) + aes(x=Season.Ref, y=mu) +
+  geom_errorbar(aes(ymin=lower, ymax=upper))+ 
+  geom_point() + geom_line(aes(group=Analysis.Area))# + facet_wrap(~Analysis.Area)
+
+##pretty similar from one to the otehr
+###let's look at bradfield and Zim now:
+brad_u_from_large_D7 <- pred_dat_biascorrected %>% filter(Analysis.Area =="Bradfield Canal")
+ggplot(brad_u_from_large_D7) + aes(x=Season.Ref, y=mu) +geom_errorbar(aes(ymin=lower, ymax=upper))+ geom_point() + geom_line(aes(group=Analysis.Area))# + facet_wrap(~Analysis.Area)
+
+ggplot(Brad_pred) + aes(x=Season.Ref, y=mu) +
+  geom_errorbar(aes(ymin=lower, ymax=upper))+ 
+  geom_point() + geom_line(aes(group=Analysis.Area))
+
+zim_u_from_large_D7 <- pred_dat_biascorrected %>% filter(Analysis.Area =="Zimovia Strait") #are we sure this is not bradfield? check filtering
+ggplot(zim_u_from_large_D7) + aes(x=Season.Ref, y=mu) +geom_errorbar(aes(ymin=lower, ymax=upper))+ geom_point() + geom_line(aes(group=Analysis.Area))# + facet_wrap(~Analysis.Area)
+
+ggplot(Zim_pred) + aes(x=Season.Ref, y=mu) +
+  geom_errorbar(aes(ymin=lower, ymax=upper))+ 
+  geom_point() + geom_line(aes(group=Analysis.Area))
+
+#and this tells a diff story...
+##max makes decisons by analysis areas?
+##Can include stat area if I go lower mode
+##what if I modeled mode vessel for each specific area? Can I do that?
+
+#OH! I can predict invidudually for each area using the gloval model, and choose the mode vessel per area. That should help!!!
 ```
 
 Results graphs
 ```{r}
+
+
 
 ```
 
@@ -371,4 +472,7 @@ _______
 Take away from KAtie meeting:
 focus on shrimp ticket for now.
 Ask Max at what level does he make decisions. When he closes an area, what is that based off of?
+
+What do I do about the imputed data? How to report that?
+I can plot raw catch and effort, I dont need to standardize that right?
 
