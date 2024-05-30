@@ -161,7 +161,26 @@ summary(M3)
 
 Another imputation method: LOCF- last obervation carried forwards - might work well for cpue
 ```{r}
-  ############################################
+D7$logCPUE <- log(D7$CPUE_nom) #I do not need the +0.001 becayse everything is positive
+#lets try imputing data for area:year wihtout imputing for every single damn boat
+temp2 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
+                     Analysis.Area = unique(D7$Analysis.Area)
+)
+D7_sub <- D7 %>% select(Season.Ref, Analysis.Area, ADFG.Number, logCPUE)
+D7_sub2 <- full_join(D7_sub, temp2)
+#make missing values for ADFG.Number the mode
+which.max(table(D7_sub2$ADFG.Number)) #52131
+
+mode_boat <- which.max(table(D7$ADFG.Number))
+
+mode_val <- names(mode_boat)
+  
+
+
+D7_sub3 <- D7_sub2 %>%
+  #mutate(ADFG.Number = ifelse(is.na(ADFG.Number), mode_val, ADFG.Number)) #replacing NA with the mode fishing vessel
+  mutate(ADFG.Number = replace_na(ADFG.Number, mode_val))
+############################################
   #I asked the internet for some help and:
   # Step 1: Calculate the mean logCPUE for each season
 season_means <- D7_sub3 %>%
@@ -247,71 +266,69 @@ AIC(M3_2, M_alt1, M_alt2)
 
 
 
-Predict 5/15/24
+Predict 5/30/24
+- shoudld I add weights to the prediction function? Try it and see if there is a change.
 ```{r}
 table(D7$ADFG.Number)
 
 
-std_dat<- expand.grid(Season.Ref = unique(D7_filled_3$Season.Ref), #do I need to extrapolate for areas/years taht do not exist??
-                              Analysis.Area = unique(D7_filled_3$Analysis.Area), #does not like east behm canal
-                              #Hooks = round(mean(cpue_dat$Hooks),0), 
-                              #Line_no = 2, #mean(cpue_dat$Line_no) unique(cpue_dat$Line_no)
-                              ADFG.Number = factor(52131) #52131 appears 399 times.
+std_dat<- expand.grid(Season.Ref = unique(D7_filled_3$Season.Ref),
+                              Analysis.Area = unique(D7_filled_3$Analysis.Area), 
+                              ADFG.Number = factor(52131) 
                       )
 
-pred_logcpue <- predict(M3_2, std_dat, type = "response", se = TRUE) 
+pred_logcpue <- predict(M3_2, std_dat, type = "response", se = TRUE) #analysis areas are weighed
+#should I add weights to predict?? for area?
 
 #cool, I have a predicted log cpue
 
+#get the unlogged cpue and put back in DF
+ln_mu = pred_logcpue$fit
+ln_sigma = pred_logcpue$se.fit
+
+
+#std_dat %>% 
+ #  mutate(
+  #        log_cpue_pred=fit,
+   #       bt_cpue = exp(fit), 
+    #      bt_upper = exp(upper),
+     #     bt_lower = exp(lower),
+      #    bt_se = exp(se)
+         # bt_cv = bt_se/bt_cpue
+  # ) -> pred_dat
+
+std_dat %>% 
+   mutate(
+          ln_mu=ln_mu,
+          mu = exp(ln_mu + (ln_sigma^2)/2),
+          sigma = sqrt((exp(ln_sigma^2) - 1) * exp(2*ln_mu + ln_sigma^2)), #make sure is right
+          upper= mu + 2*sigma,
+          lower = mu - 2*sigma
+   ) -> pred_dat_biascorrected
+
+
+
+##### bias corrected
 ```
+
+From tyler code:
+# f_bias_correct () ----
+# bias correction from log space
+# args: ln_mu = mean of log(x)
+#       ln_sigma = standard error of log(x)
+f_bias_correct <- function(ln_mu, ln_sigma) {
+  
+  mu = exp(ln_mu + (ln_sigma^2)/2)
+  sigma = sqrt((exp(ln_sigma^2) - 1) * exp(2*ln_mu + ln_sigma^2))
+  
+  return(c(mu = mu, sigma = sigma))
+}
 
 
 Standardized (predicted)  CPUE
 (from internet: Note I predict the log version as exp(predict(m) + sigma^2/2) because $E exp(X) = exp(mu + sigma^2)$ where $X \sim N(0, sigma^2)$. (This changes little here though.))
 See: https://stats.stackexchange.com/questions/115571/back-transforming-regression-results-when-modeling-logy
-```{r}
-?predict.merMod
-pred<- predict(m_glob6_IR, type = "response", se = TRUE) #newdata needs something?? right?
 
-#newdata
-newdata <- expand.grid(Season.Ref = unique(D7$Season.Ref),
-                               vessel_count_aa = round(mean(D7$vessel_count_aa),0),   #  unique(corr_spot_limited$jdate)... might need to expand and average this over all dates too
-                               ADFG.Number = unique(D7$ADFG.Number), #table(corr_spot$ADFG.Number) #52131 #56332 #41228
-                              Analysis.Area = unique(D7$Analysis.Area)
-                               
- )
-
-pred1 <- predict(m_glob6_IR, newdata, type = "response", se = TRUE)
-
-pred_df <- data.frame(newdata, pred1$fit, pred1$se.fit)
-
-#is this misleading? I have all vessels fising in all locations for this pred.
-unique(D7 %>% filter(Analysis.Area=="Bradfield Canal") %>% select(ADFG.Number)) #30
-unique(D7 %>% filter(Analysis.Area=="Lower Ernest Sound") %>% select(ADFG.Number)) #39
-unique(D7 %>% filter(Analysis.Area=="Upper Ernest Sound") %>% select(ADFG.Number)) #51
-unique(D7 %>% filter(Analysis.Area=="Zimovia Strait") %>% select(ADFG.Number)) #30
-unique(D7$ADFG.Number) #88
-###so, this might not be the best predict. Maybe I should leave the vessel part out, or choose a vessel in the middle?
-###also, filter out unknown vessel at some point please
-
-#what is, like, a very average fishing vessel, that is in all locations?
-#or I could use jsut the fishing vessels that overlap? WHAT DID PHIL AND TYLER DO?!?!?!?!
-###oh. see Spot_shrimp_ernest_clean_4.R code for an option.starts at 894. I weigh the ADFG.Number based on how many timest it appears in the dataset. How does that work for multiple areas tho??
-
-
-#newdata
-newdata2 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
-                               vessel_count_aa = round(mean(D7$vessel_count_aa),0),   #  unique(corr_spot_limited$jdate)... might need to expand and average this over all dates too
-                              # ADFG.Number = unique(D7$ADFG.Number), #table(corr_spot$ADFG.Number) #52131 #56332 #41228
-                              Analysis.Area = unique(D7$Analysis.Area)
-                               
- )
-
-pred2 <- predict(m_glob6_IR, newdata2, type = "response", se = TRUE) #ok so adfg numver should be something
-
-
-#also, remember that exp() will give you the mean, so use the adjustment to get the median plz!!!!
-```
 
 
 
@@ -331,7 +348,7 @@ Analysis and model testing: individual analysis areas
 
 Comparison graphs
 ```{r}
-
+ggplot(pred_dat_biascorrected) + aes(x=Season.Ref, y=mu) +geom_errorbar(aes(ymin=lower, ymax=upper))+ geom_point() + geom_line(aes(group=Analysis.Area)) + facet_wrap(~Analysis.Area)
 ```
 
 Results graphs

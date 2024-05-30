@@ -607,3 +607,47 @@ ggplot(D7_filled) + aes(x=Season.Ref, y=logCPUE) + geom_point() + facet_wrap(~An
 ggplot(D7_sub3) + aes(x=Season.Ref, y=logCPUE) + geom_point() + facet_wrap(~Analysis.Area)
 
 #fill, group by year, have the missing value be the average logCPue of the past year
+
+
+#Predicting:
+```{r}
+
+#newdata
+newdata <- expand.grid(Season.Ref = unique(D7$Season.Ref),
+                       vessel_count_aa = round(mean(D7$vessel_count_aa),0),   #  unique(corr_spot_limited$jdate)... might need to expand and average this over all dates too
+                       ADFG.Number = unique(D7$ADFG.Number), #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+                       Analysis.Area = unique(D7$Analysis.Area)
+                       
+)
+
+pred1 <- predict(m_glob6_IR, newdata, type = "response", se = TRUE)
+
+pred_df <- data.frame(newdata, pred1$fit, pred1$se.fit)
+
+#is this misleading? I have all vessels fising in all locations for this pred.
+unique(D7 %>% filter(Analysis.Area=="Bradfield Canal") %>% select(ADFG.Number)) #30
+unique(D7 %>% filter(Analysis.Area=="Lower Ernest Sound") %>% select(ADFG.Number)) #39
+unique(D7 %>% filter(Analysis.Area=="Upper Ernest Sound") %>% select(ADFG.Number)) #51
+unique(D7 %>% filter(Analysis.Area=="Zimovia Strait") %>% select(ADFG.Number)) #30
+unique(D7$ADFG.Number) #88
+###so, this might not be the best predict. Maybe I should leave the vessel part out, or choose a vessel in the middle?
+###also, filter out unknown vessel at some point please
+
+#what is, like, a very average fishing vessel, that is in all locations?
+#or I could use jsut the fishing vessels that overlap? WHAT DID PHIL AND TYLER DO?!?!?!?!
+###oh. see Spot_shrimp_ernest_clean_4.R code for an option.starts at 894. I weigh the ADFG.Number based on how many timest it appears in the dataset. How does that work for multiple areas tho??
+
+
+#newdata
+newdata2 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
+                        vessel_count_aa = round(mean(D7$vessel_count_aa),0),   #  unique(corr_spot_limited$jdate)... might need to expand and average this over all dates too
+                        # ADFG.Number = unique(D7$ADFG.Number), #table(corr_spot$ADFG.Number) #52131 #56332 #41228
+                        Analysis.Area = unique(D7$Analysis.Area)
+                        
+)
+
+pred2 <- predict(m_glob6_IR, newdata2, type = "response", se = TRUE) #ok so adfg numver should be something
+
+
+#also, remember that exp() will give you the mean, so use the adjustment to get the median plz!!!!
+```
