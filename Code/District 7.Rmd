@@ -309,6 +309,9 @@ std_dat %>%
 
 
 ##### bias corrected
+
+#5/30/24: different vessel modes for the different areas: predict
+
 ```
 
 From tyler code:
@@ -450,12 +453,102 @@ ggplot(Zim_pred) + aes(x=Season.Ref, y=mu) +
 #OH! I can predict invidudually for each area using the gloval model, and choose the mode vessel per area. That should help!!!
 ```
 
+Well, I don't like how different the graphs are between the full D7 model and separate by area models. I can fix by using the vessel modes separated by area, I think. Like this:
+```{r}
+#EU_dat<- expand.grid(Season.Ref = unique(D7_filled_3$Season.Ref),
+                #              Analysis.Area = "Upper Ernest Sound", 
+                 #             ADFG.Number = factor(52131) 
+                  #    )
+
+#EU_dat<- expand.grid(Season.Ref = unique(D7_filled_3$Season.Ref),
+              #                Analysis.Area = "Upper Ernest Sound", 
+               #               ADFG.Number = factor(52131) 
+                #      )
+
+
+
+
+##predict function
+D7_pred_2 <- function(DATA, ANALYSIS_AREA, MODE_VESSEL, MODEL){
+std_dat<- expand.grid(Season.Ref = unique(DATA$Season.Ref),
+                              Analysis.Area = ANALYSIS_AREA, 
+                              ADFG.Number = factor(MODE_VESSEL) #maybe pick mode vessel for this area. This is the mode vessel for D7 overall
+                      )
+pred_logcpue <- predict(MODEL, std_dat, type = "response", se = TRUE) 
+ln_mu = pred_logcpue$fit
+ln_sigma = pred_logcpue$se.fit
+
+std_dat %>% 
+   mutate(
+          ln_mu=ln_mu,
+          mu = exp(ln_mu + (ln_sigma^2)/2),
+          sigma = sqrt((exp(ln_sigma^2) - 1) * exp(2*ln_mu + ln_sigma^2)), #make sure is right
+          upper= mu + 2*sigma,
+          lower = mu - 2*sigma
+   ) -> pred_dat_biascorrected
+
+return(pred_dat_biascorrected)
+
+}
+
+ernU_pred <- D7_pred_2(MODEL = M3_2, ANALYSIS_AREA = "Upper Ernest Sound", MODE_VESSEL = 52131, DATA=D7_filled_3)
+ernL_pred <- D7_pred_2(MODEL = M3_2, ANALYSIS_AREA = "Lower Ernest Sound", MODE_VESSEL = EL_mode_boat, DATA=D7_filled_3)
+brad_pred <- D7_pred_2(MODEL = M3_2, ANALYSIS_AREA = "Bradfield Canal", MODE_VESSEL = brad_mode_boat, DATA=D7_filled_3)
+zim_pred <- D7_pred_2(MODEL = M3_2, ANALYSIS_AREA = "Zimovia Strait", MODE_VESSEL = zim_mode_boat, DATA=D7_filled_3)
+
+D7_pred_comb <- rbind(ernU_pred, ernL_pred, brad_pred, zim_pred)
+
+```
+
+
+Try graphing THAT
+```{r}
+
+ggplot(D7_pred_comb) + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point() + geom_line(aes(group="Analysis.Area"))+
+  facet_wrap(~Analysis.Area)
+
+#how does this compare to my other method?
+
+#the combined method where I use the overall vessel mode:
+ggplot(pred_dat_biascorrected) + aes(x=Season.Ref, y=mu) +geom_errorbar(aes(ymin=lower, ymax=upper))+ geom_point() + geom_line(aes(group=Analysis.Area)) + facet_wrap(~Analysis.Area)
+
+#the combined plot when I separate things:
+ggplot(comb_D7) + aes(x=Season.Ref, y=mu) +
+  geom_errorbar(aes(ymin=lower, ymax=upper))+ 
+  geom_point() + geom_line(aes(group=Analysis.Area)) + facet_wrap(~Analysis.Area) 
+
+
+##close look at zimovia
+D7_pred_comb %>% filter(Analysis.Area =="Zimovia Strait") %>%
+  ggplot() + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point()+geom_line(aes(group="Analysis.Area"))
+
+pred_dat_biascorrected %>% filter(Analysis.Area =="Zimovia Strait") %>%
+  ggplot() + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point()+geom_line(aes(group="Analysis.Area")) 
+
+comb_D7 %>% filter(Analysis.Area =="Zimovia Strait") %>%
+  ggplot() + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point() + geom_line(aes(group="Analysis.Area"))
+
+#close look at bradfield
+D7_pred_comb %>% filter(Analysis.Area =="Bradfield Canal") %>%
+  ggplot() + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point()+geom_line(aes(group="Analysis.Area"))
+
+pred_dat_biascorrected %>% filter(Analysis.Area =="Bradfield Canal") %>%
+  ggplot() + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point()+geom_line(aes(group="Analysis.Area")) 
+
+comb_D7 %>% filter(Analysis.Area =="Bradfield Canal") %>%
+  ggplot() + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point() + geom_line(aes(group="Analysis.Area"))
+
+#close look at U ernest
+
+```
+
+Ok, based on these graphs I've decided area-wide analysis is fine, and I'd like to use the mode of each vessel for analysis. Now make the graphs for D7 and do the other stuff that Max wanted.
+
 Results graphs
 ```{r}
 
-
-
 ```
+
 
 Aside:
 IS ADFG vessel accounted for?
