@@ -529,20 +529,61 @@ comb_D7 %>% filter(Analysis.Area =="Bradfield Canal") %>%
 Ok, based on these graphs I've decided area-wide analysis is fine, and I'd like to use the mode of each vessel for analysis. Now make the graphs for D7 and do the other stuff that Max wanted.
 
 
-NO WEIGHTS
-```{r}
-M3_2 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3) #shold I weigh the diff years at all??
-summary(M3_2)
-M_alt1 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area, data=D7_filled_3)
-M_alt2 <- lm(logCPUE~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3) 
-
-AIC(M3_2, M_alt1, M_alt2)
-```
-
 
 Results graphs
+D7_pred_comb separates to: ernU_pred, ernL_pred, brad_pred, zim_pred
 ```{r}
 
+#make teh function (move to functions page later)
+make_plots <- function(DATA_PRED, AREA_NAME, DATA_RAW){ #data pred is the
+ (E1<-ggplot(data=DATA_PRED) + aes(x=Season.Ref, y=mu) + 
+   geom_point(size=3)+
+   geom_errorbar( aes(ymin=lower, ymax=upper)) +
+   geom_line(aes(group=1))+ #that works+
+   #geom_hline(aes(yintercept=mean(std_dat_ranef_lim$bt_cpue)), linetype="dashed")+
+   theme_cowplot()+
+   labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = AREA_NAME )+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))#+
+   #  scale_y_continuous(breaks = c(1,2,3,4,5,6), expand=c(0,0))+
+    # ylim(1.8, 5)
+   )
+
+ raw_totals <- DATA_RAW %>%
+   group_by(Season.Ref, Analysis.Area) %>%
+   dplyr::summarize(Harvest = sum(total_weight),
+                    Effort = sum(max_pots_2))
+raw_totals %>% filter(Analysis.Area == AREA_NAME) %>%
+ggplot() + aes(x=Season.Ref) +
+   geom_point(aes(y=Harvest), shape=0, size=3)+ #harvest graph
+   geom_line(aes(y=Harvest, group=1))+
+   geom_point(aes(y=Effort), shape=15, size=3) +
+   geom_line(aes(y=Effort, group=1), linetype="dashed") +
+   theme_cowplot()+
+   labs(x="Season", y="Harvest (lbs) or Effort (pots)")+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+E2 <- last_plot()
+
+(Plot <- E1/E2)
+return(Plot)
+}
+
+#upper ERnest
+Upper_ernest_plot <- make_plots(DATA_PRED = ernU_pred, AREA_NAME = "Upper Ernest Sound", DATA_RAW=D7)
+Lower_ernest_plot <- make_plots(DATA_PRED = ernL_pred, AREA_NAME = "Lower Ernest Sound", DATA_RAW=D7)
+Brad_plot <- make_plots(DATA_PRED = brad_pred, AREA_NAME = "Bradfield Canal", DATA_RAW=D7)
+Zim_plot <- make_plots(DATA_PRED = zim_pred, AREA_NAME = "Zimovia Strait", DATA_RAW=D7)
+
+Upper_ernest_plot
+Lower_ernest_plot
+Brad_plot
+Zim_plot
+
+```
+
+D7 total graphs
+Read up on combining cpue's from area:
+```{r}
+#how to use the weighing component... now?
 ```
 
 
