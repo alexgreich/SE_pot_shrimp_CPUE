@@ -651,3 +651,51 @@ pred2 <- predict(m_glob6_IR, newdata2, type = "response", se = TRUE) #ok so adfg
 
 #also, remember that exp() will give you the mean, so use the adjustment to get the median plz!!!!
 ```
+
+#D7 weighting the area tangent
+```{r}
+#D7_filled_2 is my dataframe
+#import areas of .... stat areas
+## from an R standpoint, it will be messy and full of NA's
+areas_raw <- read.csv("Data/Southeast_Shrimp_StatArea_SqMiles.csv")
+names(areas_raw)
+areas_D7 <- areas_raw %>% #from the messy dataset
+  select(DISTRICT_CODE, STAT_AREA_NAME, STAT_AREA, Area_SqMiles) %>% #choose the columns I care about
+  filter(DISTRICT_CODE == 107) #%>% #I only care about District 7 right now
+#group_by(S)
+
+View(areas_D7)
+
+U_ern_sound <- areas_D7 %>% filter(STAT_AREA == 10720) %>%
+  summarise(area=sum(Area_SqMiles))
+L_ern_sound <- areas_D7 %>% filter(STAT_AREA == 10710) %>%
+  summarise(area=sum(Area_SqMiles))
+Zim_st <- areas_D7 %>% filter(STAT_AREA == 10730|STAT_AREA == 10735) %>%
+  summarise(area=sum(Area_SqMiles))
+Brad_Can <- areas_D7 %>% filter(STAT_AREA == 10740|STAT_AREA == 10745) %>%
+  summarise(area=sum(Area_SqMiles))
+
+df_temp <- data.frame(Analysis.Area= c("Upper Ernest Sound", "Lower Ernest Sound", "Bradfield Canal", "Zimovia Strait"),
+                      area_sqmi = c(U_ern_sound$area, L_ern_sound$area, Zim_st$area, Brad_Can$area))
+
+#ugh that was tedious
+##at least I have my areas now
+
+D7_filled_3 <- left_join(D7_filled_2, df_temp) #joined by analysis areas, now I have areas that I can use to weigh
+
+
+#now model selection, using areas as the weights. MAybe I do that step when calculating... mgmt unit cpue, and I should run the model without weights for pred cpue
+##should I weigh time, somehow...?
+
+#anyway, generate a model
+M3_2 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3, weights=area_sqmi) #shold I weigh the diff years at all??
+summary(M3_2)
+M_alt1 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area, data=D7_filled_3, weights=area_sqmi)
+M_alt2 <- lm(logCPUE~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3, weights=area_sqmi) 
+
+AIC(M3_2, M_alt1, M_alt2)
+
+#ok but what about time? Should I add time in there, weigh a row of data less if there are many observations for that year and analysis area?
+##weights could be: area_sq* (1/total#) of obs per that Analysis.Area and Season.Ref combo. Does that make sense???
+
+```

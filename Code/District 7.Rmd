@@ -213,8 +213,6 @@ ggplot(D7_filled_2) + aes(x=Season.Ref, y=logCPUE) + geom_point() + facet_wrap(~
 ```
 
 
-
-5/28/24: weights on areas (the size of the analysis areas when modeling!! see if you can remove the bias of additional data)
 Model selection after imputation
 ```{r}
 #D7_filled_2 is my dataframe
@@ -227,7 +225,7 @@ areas_D7 <- areas_raw %>% #from the messy dataset
   filter(DISTRICT_CODE == 107) #%>% #I only care about District 7 right now
   #group_by(S)
 
-View(areas_D7)
+#View(areas_D7)
 
 U_ern_sound <- areas_D7 %>% filter(STAT_AREA == 10720) %>%
   summarise(area=sum(Area_SqMiles))
@@ -246,28 +244,22 @@ df_temp <- data.frame(Analysis.Area= c("Upper Ernest Sound", "Lower Ernest Sound
 
 D7_filled_3 <- left_join(D7_filled_2, df_temp) #joined by analysis areas, now I have areas that I can use to weigh
 
-
-#now model selection, using areas as the weights. MAybe I do that step when calculating... mgmt unit cpue, and I should run the model without weights for pred cpue
-##should I weigh time, somehow...?
-
-#anyway, generate a model
-M3_2 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3, weights=area_sqmi) #shold I weigh the diff years at all??
+#generate a model
+M3_2 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3) 
 summary(M3_2)
-M_alt1 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area, data=D7_filled_3, weights=area_sqmi)
-M_alt2 <- lm(logCPUE~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3, weights=area_sqmi) 
+M_alt1 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area, data=D7_filled_3)
+M_alt2 <- lm(logCPUE~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3) 
 
-AIC(M3_2, M_alt1, M_alt2)
+AIC(M3_2, M_alt1, M_alt2) #M3_2 wins
 
-#ok but what about time? Should I add time in there, weigh a row of data less if there are many observations for that year and analysis area?
-##weights could be: area_sq* (1/total#) of obs per that Analysis.Area and Season.Ref combo. Does that make sense???
+
 
 ```
 
 
 
 
-Predict 5/30/24
-- shoudld I add weights to the prediction function? Try it and see if there is a change.
+Predict.
 ```{r}
 table(D7$ADFG.Number)
 
@@ -308,9 +300,8 @@ std_dat %>%
 
 
 
-##### bias corrected
+##### bias corrected: do I use in every case?
 
-#5/30/24: different vessel modes for the different areas: predict
 
 ```
 
@@ -455,16 +446,6 @@ ggplot(Zim_pred) + aes(x=Season.Ref, y=mu) +
 
 Well, I don't like how different the graphs are between the full D7 model and separate by area models. I can fix by using the vessel modes separated by area, I think. Like this:
 ```{r}
-#EU_dat<- expand.grid(Season.Ref = unique(D7_filled_3$Season.Ref),
-                #              Analysis.Area = "Upper Ernest Sound", 
-                 #             ADFG.Number = factor(52131) 
-                  #    )
-
-#EU_dat<- expand.grid(Season.Ref = unique(D7_filled_3$Season.Ref),
-              #                Analysis.Area = "Upper Ernest Sound", 
-               #               ADFG.Number = factor(52131) 
-                #      )
-
 
 
 
@@ -519,14 +500,17 @@ ggplot(comb_D7) + aes(x=Season.Ref, y=mu) +
 
 
 ##close look at zimovia
-D7_pred_comb %>% filter(Analysis.Area =="Zimovia Strait") %>%
+a<- D7_pred_comb %>% filter(Analysis.Area =="Zimovia Strait") %>%
   ggplot() + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point()+geom_line(aes(group="Analysis.Area"))
 
-pred_dat_biascorrected %>% filter(Analysis.Area =="Zimovia Strait") %>%
+b <- pred_dat_biascorrected %>% filter(Analysis.Area =="Zimovia Strait") %>%
   ggplot() + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point()+geom_line(aes(group="Analysis.Area")) 
 
-comb_D7 %>% filter(Analysis.Area =="Zimovia Strait") %>%
+c <- comb_D7 %>% filter(Analysis.Area =="Zimovia Strait") %>%
   ggplot() + aes(x=Season.Ref, y=mu) + geom_errorbar(aes(ymin=lower, ymax=upper)) + geom_point() + geom_line(aes(group="Analysis.Area"))
+
+library(patchwork)
+a+b+c
 
 #close look at bradfield
 D7_pred_comb %>% filter(Analysis.Area =="Bradfield Canal") %>%
@@ -543,6 +527,18 @@ comb_D7 %>% filter(Analysis.Area =="Bradfield Canal") %>%
 ```
 
 Ok, based on these graphs I've decided area-wide analysis is fine, and I'd like to use the mode of each vessel for analysis. Now make the graphs for D7 and do the other stuff that Max wanted.
+
+
+NO WEIGHTS
+```{r}
+M3_2 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3) #shold I weigh the diff years at all??
+summary(M3_2)
+M_alt1 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area, data=D7_filled_3)
+M_alt2 <- lm(logCPUE~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3) 
+
+AIC(M3_2, M_alt1, M_alt2)
+```
+
 
 Results graphs
 ```{r}
