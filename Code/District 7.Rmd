@@ -11,6 +11,13 @@ knitr::opts_knit$set(root.dir = 'C:/Users/agreich/OneDrive - State of Alaska/Des
 ```
 
 
+Key points: 6/4/24:
+- QC my wrangle please, and give me clean data next time b/c wrangling takes forever
+- analysis by mgmt area -> predict the results by analysis area, average to mgmt unit, average mgmt units to get Region-wide cpue
+--more efficient than 67 or whatever models per analysis area.
+-model structure: global and selected model
+- from the wish list: what are you talking about? Examples please.
+
 
 Anyway, let's get started. This document will look at management unit District 7 for pot (spot) shrimp standardization. It will load in the (pre-wrangled) data, wrangle further for district 1, and then some EDA (focusing on variables of interest and correlation). The analysis will be by district with an HGAM (hierarchical GAM) with the variables of interest as fixed effects and Analysis Area as a random effect. I will do model selection on a few versions of this HGAM. I will then make graphs of the standardized CPUE (by district and) and whatever else Max wants. THEN, I will run individual models by analysis areas, ideally with an automated function, and compare the graphs of those automated functions to the cpue of the ranef model.This will help me decide if models should be by MANAGEMENT UNIT (larger) or by ANALYSIS AREA (smaller). In hindsight, I should start with District 7, since I have explored the Upper Ernest sound data extensively.Ok, now the RMD is named accordingly 
 
@@ -599,8 +606,8 @@ Stuck here 6/3/24- I need to take the variance of the mean- either by delta meth
 ##Looking at p 111 of campbell 2015
 D7_results_area_weighted <- D7_pred_comb %>%
   group_by(Season.Ref) %>% #I want the sum by year
-  summarise(CPUE_avg = weighted.mean(x=mu, y=area_sqmi),
-            CPUE_sd = sqrt(weighted.mean(x=sigma^2, y=area_sqmi))
+  summarise(CPUE_avg = weighted.mean(x=mu, w=area_sqmi),
+            CPUE_sd = sqrt(weighted.mean(x=sigma^2, w=area_sqmi))
   )%>%
    mutate(upper = CPUE_avg + 2*CPUE_sd,
          lower = CPUE_avg - 2*CPUE_sd)
@@ -670,7 +677,7 @@ D7_no_weight <- ggplot(D7_results_not_weighted)  + aes(x=Season.Ref, y=CPUE_avg)
 D7_plot <- D7_no_weight/raw_D7_plot
 
 #D7 graphs weighted by area
-ggplot(D7_results_area_weighted)  + aes(x=Season.Ref, y=CPUE_avg) + 
+D7_yes_weight <- ggplot(D7_results_area_weighted)  + aes(x=Season.Ref, y=CPUE_avg) + 
    geom_point(size=3)+
    geom_errorbar( aes(ymin=lower, ymax=upper)) +
    geom_line(aes(group=1))+ #that works+
@@ -683,6 +690,9 @@ ggplot(D7_results_area_weighted)  + aes(x=Season.Ref, y=CPUE_avg) +
 
 D7_results_area_weighted
 D7_results_not_weighted
+
+D7_plot
+(D7_plot_weight <- D7_yes_weight/raw_D7_plot)
 ```
 
 
