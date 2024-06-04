@@ -582,9 +582,16 @@ Zim_plot
 
 ```
 
+bootstrap aside.
+```{r}
+library(nptest)
+np.boot(x=)
+```
+
 D7 total graphs
 Read up on combining cpue's from area:
 Not sure if I should aggregate cpue's (sum) or take the average.
+Stuck here 6/3/24- I need to take the variance of the mean- either by delta method or bootstrapping.
 ```{r}
 
 #D7 df's
@@ -593,40 +600,89 @@ Not sure if I should aggregate cpue's (sum) or take the average.
 D7_results_area_weighted <- D7_pred_comb %>%
   group_by(Season.Ref) %>% #I want the sum by year
   summarise(CPUE_avg = weighted.mean(x=mu, y=area_sqmi),
-            CPUE_sum = sum(mu)) %>%
-   area = max(area_sqmi)) %>% #ok this part is fucked. Fix it. I think it calcs the biomass anyway so mayve dont worry
-  mutate(index= CPUE_sum*area) #average? or sum? Hoyle et al says take the wighted sum
+            CPUE_sd = sqrt(weighted.mean(x=sigma^2, y=area_sqmi))
+  )%>%
+   mutate(upper = CPUE_avg + 2*CPUE_sd,
+         lower = CPUE_avg - 2*CPUE_sd)
+  # area = max(area_sqmi)) %>% #ok this part is fucked. Fix it. I think it calcs the biomass anyway so mayve dont worry
+  #mutate(index= CPUE_sum*area) #average? or sum? Hoyle et al says take the wighted sum
 #Calc se!!!!!
 
 #library(car)$
 #car::deltaMethod(M3_2, mean())
-library(msm)
-deltamethod(g=mean(D7_pred_comb$mu), mean=mean(D7_pred_comb$mu), cov = summary(M3_2)$sigma^2)
+#library(msm)
+#deltamethod(g=mean(D7_pred_comb$mu), mean=mean(D7_pred_comb$mu), cov = summary(M3_2)$sigma^2)
+
+
+#6/4/24
+##get mean of sd
+D7_pred_comb$sigma #my standard deviations
+var_D7<-D7_pred_comb$sigma^2 #my variances
+sqrt(mean(var_D7))
+mean(D7_pred_comb$sigma) #these are different, good to know
+#only works for equal sample sizes, fuck. nWait, in predict I DO have equal sample sizes
+
+
+
+
+
+#model:M3_2
+summary(M3_2)
+
 
 D7_results_not_weighted <- D7_pred_comb %>%
   group_by(Season.Ref) %>% #I want the sum by year
   summarise(CPUE_avg = mean(mu), #average the cpue's
             #CPUE_sum = sum(mu), #I do not think I need this
-            CPUE_sd = car::deltaMethod(mu)) #get the sd's
-#calc se!!!!!
+            CPUE_sd = sqrt(mean(sigma^2))) %>%
+  mutate(upper = CPUE_avg + 2*CPUE_sd,
+         lower = CPUE_avg - 2*CPUE_sd)#get the sd's by taking the mean of the variances, then converting back to sd.
 
+
+
+#total D7 plot
+ raw_totals_D7 <- D7 %>%
+   group_by(Season.Ref) %>%
+   dplyr::summarize(Harvest = sum(total_weight),
+                    Effort = sum(max_pots_2))
+raw_D7_plot <-raw_totals_D7 %>%# filter(Analysis.Area == AREA_NAME) %>%
+ ggplot() + aes(x=Season.Ref) +
+   geom_point(aes(y=Harvest), shape=0, size=3)+ #harvest graph
+   geom_line(aes(y=Harvest, group=1))+
+   geom_point(aes(y=Effort), shape=15, size=3) +
+   geom_line(aes(y=Effort, group=1), linetype="dashed") +
+   theme_cowplot()+
+   labs(x="Season", y="Harvest (lbs) or Effort (pots)")+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 #D7 graphs unweighted (soo... weighted (or biased, depending on your perspective) by catch)
 #D7_unweighed <- make.plots(DATA_PRED = D7_pred_comb,AREA_NAME = NULL, DATA_RAW = D7 ) #no area name, will it work? #NOPE. graph by hand
-ggplot(D7_results_not_weighted)  + aes(x=Season.Ref, y=CPUE_avg) + 
+D7_no_weight <- ggplot(D7_results_not_weighted)  + aes(x=Season.Ref, y=CPUE_avg) + 
    geom_point(size=3)+
-  # geom_errorbar( aes(ymin=lower, ymax=upper)) +
+   geom_errorbar( aes(ymin=lower, ymax=upper)) +
    geom_line(aes(group=1))+ #that works+
    #geom_hline(aes(yintercept=mean(std_dat_ranef_lim$bt_cpue)), linetype="dashed")+
    theme_cowplot()+
    labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "District 7" )+
-   theme(axis.text.x = element_text(angle = 45, hjust = 1))#+
-   #  scale_y_continuous(breaks = c(1,2,3,4,5,6), expand=c(0,0))+
-    # ylim(1.8, 5)
-   #oh no. We need to sum the things.
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+   # scale_y_continuous(breaks = c(1,2,3,4,5,6), expand=c(0,0))+
+    ylim(0, 8)
 
+D7_plot <- D7_no_weight/raw_D7_plot
 
 #D7 graphs weighted by area
+ggplot(D7_results_area_weighted)  + aes(x=Season.Ref, y=CPUE_avg) + 
+   geom_point(size=3)+
+   geom_errorbar( aes(ymin=lower, ymax=upper)) +
+   geom_line(aes(group=1))+ #that works+
+   #geom_hline(aes(yintercept=mean(std_dat_ranef_lim$bt_cpue)), linetype="dashed")+
+   theme_cowplot()+
+   labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "District 7" )+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+   # scale_y_continuous(breaks = c(1,2,3,4,5,6), expand=c(0,0))+
+    ylim(0, 8)
 
+D7_results_area_weighted
+D7_results_not_weighted
 ```
 
 
