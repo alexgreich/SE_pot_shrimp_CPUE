@@ -479,6 +479,8 @@ zim_pred <- D7_pred_2(MODEL = M3_2, ANALYSIS_AREA = "Zimovia Strait", MODE_VESSE
 
 D7_pred_comb <- rbind(ernU_pred, ernL_pred, brad_pred, zim_pred)
 
+D7_pred_comb <- left_join(D7_pred_comb, df_temp)
+
 ```
 
 
@@ -535,7 +537,7 @@ D7_pred_comb separates to: ernU_pred, ernL_pred, brad_pred, zim_pred
 ```{r}
 
 #make teh function (move to functions page later)
-make_plots <- function(DATA_PRED, AREA_NAME, DATA_RAW){ #data pred is the
+make.plots <- function(DATA_PRED, AREA_NAME, DATA_RAW){ #data pred is the
  (E1<-ggplot(data=DATA_PRED) + aes(x=Season.Ref, y=mu) + 
    geom_point(size=3)+
    geom_errorbar( aes(ymin=lower, ymax=upper)) +
@@ -568,10 +570,10 @@ return(Plot)
 }
 
 #upper ERnest
-Upper_ernest_plot <- make_plots(DATA_PRED = ernU_pred, AREA_NAME = "Upper Ernest Sound", DATA_RAW=D7)
-Lower_ernest_plot <- make_plots(DATA_PRED = ernL_pred, AREA_NAME = "Lower Ernest Sound", DATA_RAW=D7)
-Brad_plot <- make_plots(DATA_PRED = brad_pred, AREA_NAME = "Bradfield Canal", DATA_RAW=D7)
-Zim_plot <- make_plots(DATA_PRED = zim_pred, AREA_NAME = "Zimovia Strait", DATA_RAW=D7)
+Upper_ernest_plot <- make.plots(DATA_PRED = ernU_pred, AREA_NAME = "Upper Ernest Sound", DATA_RAW=D7)
+Lower_ernest_plot <- make.plots(DATA_PRED = ernL_pred, AREA_NAME = "Lower Ernest Sound", DATA_RAW=D7)
+Brad_plot <- make.plots(DATA_PRED = brad_pred, AREA_NAME = "Bradfield Canal", DATA_RAW=D7)
+Zim_plot <- make.plots(DATA_PRED = zim_pred, AREA_NAME = "Zimovia Strait", DATA_RAW=D7)
 
 Upper_ernest_plot
 Lower_ernest_plot
@@ -582,8 +584,49 @@ Zim_plot
 
 D7 total graphs
 Read up on combining cpue's from area:
+Not sure if I should aggregate cpue's (sum) or take the average.
 ```{r}
-#how to use the weighing component... now?
+
+#D7 df's
+##combine values
+##Looking at p 111 of campbell 2015
+D7_results_area_weighted <- D7_pred_comb %>%
+  group_by(Season.Ref) %>% #I want the sum by year
+  summarise(CPUE_avg = weighted.mean(x=mu, y=area_sqmi),
+            CPUE_sum = sum(mu)) %>%
+   area = max(area_sqmi)) %>% #ok this part is fucked. Fix it. I think it calcs the biomass anyway so mayve dont worry
+  mutate(index= CPUE_sum*area) #average? or sum? Hoyle et al says take the wighted sum
+#Calc se!!!!!
+
+#library(car)$
+#car::deltaMethod(M3_2, mean())
+library(msm)
+deltamethod(g=mean(D7_pred_comb$mu), mean=mean(D7_pred_comb$mu), cov = summary(M3_2)$sigma^2)
+
+D7_results_not_weighted <- D7_pred_comb %>%
+  group_by(Season.Ref) %>% #I want the sum by year
+  summarise(CPUE_avg = mean(mu), #average the cpue's
+            #CPUE_sum = sum(mu), #I do not think I need this
+            CPUE_sd = car::deltaMethod(mu)) #get the sd's
+#calc se!!!!!
+
+#D7 graphs unweighted (soo... weighted (or biased, depending on your perspective) by catch)
+#D7_unweighed <- make.plots(DATA_PRED = D7_pred_comb,AREA_NAME = NULL, DATA_RAW = D7 ) #no area name, will it work? #NOPE. graph by hand
+ggplot(D7_results_not_weighted)  + aes(x=Season.Ref, y=CPUE_avg) + 
+   geom_point(size=3)+
+  # geom_errorbar( aes(ymin=lower, ymax=upper)) +
+   geom_line(aes(group=1))+ #that works+
+   #geom_hline(aes(yintercept=mean(std_dat_ranef_lim$bt_cpue)), linetype="dashed")+
+   theme_cowplot()+
+   labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "District 7" )+
+   theme(axis.text.x = element_text(angle = 45, hjust = 1))#+
+   #  scale_y_continuous(breaks = c(1,2,3,4,5,6), expand=c(0,0))+
+    # ylim(1.8, 5)
+   #oh no. We need to sum the things.
+
+
+#D7 graphs weighted by area
+
 ```
 
 
