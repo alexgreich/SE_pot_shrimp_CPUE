@@ -699,3 +699,153 @@ AIC(M3_2, M_alt1, M_alt2)
 ##weights could be: area_sq* (1/total#) of obs per that Analysis.Area and Season.Ref combo. Does that make sense???
 
 ```
+
+
+###kind of needs a smooth throuhg (of hashtags) and a QC
+####CHANGE TO BY MGMT UNIT!! (WILL NOT BE HARD)
+wrangle.spot.shrimp.by.district <- function(dat, distr){  
+  
+  #test
+  #dat <- all_shrimp_w_analysis_area
+  #distr <- 107
+  
+  #filter for the district of interest
+  df_1 <- dat %>% filter(district == distr)
+  
+  
+  
+  
+  #vessel count in the area of fishing during that year. SHOULD I DO THIS AFTER FILTERING FOR SPOT SHRIMP?? Perhaps.
+  df_2 <- df_1 %>% 
+    group_by(Season.Ref, Analysis.Area, Species.Code) %>% #grouping by season (year) AND.. fish ticket #AND... species??
+    mutate(vessel_count = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
+    ungroup() #ungroup
+  
+  #unique(df_2$Species.Code) #what is 962?
+  
+  #ca
+  df_3 <- df_2 %>%
+    mutate(Pot.Lifts = replace_na(Pot.Lifts, 0)) %>% ##where there are NA's, put 0
+    group_by(Fish.Ticket.Number, Species.Code, Analysis.Area) %>% #are these the right groupings? should I group by season(year) instead of fish ticket? No, because I want max pots per boat
+    summarise(
+      total_weight = sum(Whole.Weight..sum.), #total weight for each species, fish ticket, and analysis area (hopefully they ddidnt group coons and spot)
+      max_pots = max(Pot.Lifts), #max pots for each species, fish ticket, and analysis area #MIGHT BE AN ERROR HERE. WHAT IF THE LINE IS LISTED FOR A DIFF SPECIS?
+      ADFG.Number = max(ADFG.Number), #I'm just saying I want this in the resulting df
+      Season.Ref=max(Season.Ref), #I'm just saying I want this in the resulting df
+      Vessel.Name = max(Vessel.Name), #I'm just saying I want this in the resulting df
+      DOL.Month= max(DFB.Month), #I'm just saying I want this in the resulting df
+      Stat.Week=max(Stat.Week), #I'm just saying I want this in the resulting df
+      Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
+      Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
+      vessel_count=max(vessel_count) #I'm just saying I want this in the resulting df
+    ) %>%
+    ungroup() 
+  
+  #calculating max pots, as across species they only lsit one pot sometimes
+  max_pots_total <- df_3 %>% #get # pots fpr each fish ticket, Ccombines species
+    group_by(Fish.Ticket.Number) %>%
+    summarise( #if I needed to account for people correctly partitioning shrimp effort (ex 4 pots to spot and 2 pots to coon, I can add an if statement for if the pot lifts in a fish ticket are unequal and do not contain 0. And... do soemthing with that if statment)
+      max_pots_2 = max(max_pots) #takes the max of pots. This will acoount for: sitautions where pots are replicated (ex: 4,4,4), and situations where pots are one entry, (ex: 4 0 0) Does not currently account for when people actually partitioned their effort to spot vs. coon.
+      ##whatif pots were already proportioned appropriately tho? Does it account for that?
+    )%>%
+    ungroup()
+  
+  df_4 <- df_3 %>% #this is where NA's appear for the season.ref code. need to figure out why.
+    #filter(Species.Code == 965) %>%
+    right_join(max_pots_total) %>% #probs has to do with the join, the NA's that is
+    filter(Species.Code == 965) %>% #switched this over here, no more NAs'
+    select(-max_pots)
+  
+  #calc nomimal cpue
+  #calculate nominal CPUE
+  df_5 <- df_4 %>%
+    filter(max_pots_2 != 0) %>%
+    mutate(CPUE_nom = total_weight/max_pots_2)
+  
+  #fix event date to not be weird
+  df_5$Event.Date <- as.Date(df_5$Event.Date)
+  
+  #wrangle jdate
+  df_6 <-  df_5 %>%
+    mutate(landing_date = parse_date_time(Event.Date,c("%Y/%m/%d"))) %>%
+    mutate(jdate = as.numeric(format(landing_date,"%j"))) #nailed it!!!
+  
+  #ok, that should do it, QC last 3 blocks please.
+  
+  return(df_6)
+  
+}
+
+#same but for coons
+##I forget which district/analysis area uses coons instead of spot shrimp. District 15(?)
+wrangle.coonstripe.shrimp.by.district <- function(dat, distr){  
+  
+  #test
+  # dat <- all_shrimp_w_analysis_area
+  #distr <- 107
+  
+  #filter for the district of interest
+  df_1 <- dat %>% filter(district == distr)
+  
+  
+  #vessel count in the area of fishing during that year. SHOULD I DO THIS AFTER FILTERING FOR SPOT SHRIMP?? Perhaps.
+  df_2 <- df_1 %>% 
+    group_by(Season.Ref, Analysis.Area, Species.Code) %>% #grouping by season (year) AND.. fish ticket #AND... species??
+    mutate(vessel_count = n_distinct(ADFG.Number)) %>% #count the unique # of vessels (by ADFG number) #should I do this AFTER filtering for spot shrimp??
+    ungroup() #ungroup
+  
+  #unique(df_2$Species.Code) #what is 962?
+  
+  #ca
+  df_3 <- df_2 %>%
+    mutate(Pot.Lifts = replace_na(Pot.Lifts, 0)) %>% ##where there are NA's, put 0
+    group_by(Fish.Ticket.Number, Species.Code, Analysis.Area) %>% #are these the right groupings? should I group by season(year) instead of fish ticket? No, because I want max pots per boat
+    summarise(
+      total_weight = sum(Whole.Weight..sum.), #total weight for each species, fish ticket, and analysis area (hopefully they ddidnt group coons and spot)
+      max_pots = max(Pot.Lifts), #max pots for each species, fish ticket, and analysis area
+      ADFG.Number = max(ADFG.Number), #I'm just saying I want this in the resulting df
+      Season.Ref=max(Season.Ref), #I'm just saying I want this in the resulting df
+      Vessel.Name = max(Vessel.Name), #I'm just saying I want this in the resulting df
+      DOL.Month= max(DFB.Month), #I'm just saying I want this in the resulting df
+      Stat.Week=max(Stat.Week), #I'm just saying I want this in the resulting df
+      Batch.Year=max(Batch.Year), #I'm just saying I want this in the resulting df
+      Event.Date=max(Date.of.Landing), #I'm just saying I want this in the resulting df
+      vessel_count=max(vessel_count), #I'm just saying I want this in the resulting 
+      Management_unit=max(Management_unit) #added in anticipation of combining this with full dataset
+    ) %>%
+    ungroup() 
+  
+  #calculating max pots, as across species they only lsit one pot sometimes
+  max_pots_total <- df_3 %>% #get # pots fpr each fish ticket
+    group_by(Fish.Ticket.Number) %>%
+    summarise( #if I needed to account for people correctly partitioning shrimp effort (ex 4 pots to spot and 2 pots to coon, I can add an if statement for if the pot lifts in a fish ticket are unequal and do not contain 0. And... do soemthing with that if statment)
+      max_pots_2 = max(max_pots) #the way I wrangled, this will account for 
+    )%>%
+    ungroup()
+  
+  df_4 <- df_3 %>% #this is where NA's appear for the season.ref code. need to figure out why.
+    #filter(Species.Code == 965) %>%
+    right_join(max_pots_total) %>% #probs has to do with the join, the NA's that is
+    filter(Species.Code == 964) %>% #coons is 964??
+    select(-max_pots)
+  
+  #calc nomimal cpue
+  #calculate nominal CPUE
+  df_5 <- df_4 %>%
+    filter(max_pots_2 != 0) %>%
+    mutate(CPUE_nom = total_weight/max_pots_2)
+  
+  #fix event date to not be weird
+  df_5$Event.Date <- as.Date(df_5$Event.Date)
+  
+  #wrangle jdate
+  df_6 <-  df_5 %>%
+    mutate(landing_date = parse_date_time(Event.Date,c("%Y/%m/%d"))) %>%
+    mutate(jdate = as.numeric(format(landing_date,"%j"))) #nailed it!!!
+  
+  #ok, that should do it, QC last 3 blocks please.
+  
+  return(df_6)
+  
+}
+
