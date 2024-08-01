@@ -4,8 +4,8 @@ author: "Alex Reich"
 date: "2024-04-24"
 output: html_document
 ---
-Aside:
-Argh, I had to upgrade to R 4.4.0 to get lme4 (the matrix package, specifically) to work. But now the r markdown settings are different and I can't default to the home directory being the project. So I will set that here:
+
+Set RMD directory
 ```{r, setup, include=FALSE}
 knitr::opts_knit$set(root.dir = 'C:/Users/agreich/OneDrive - State of Alaska/Desktop/Shrimp/Shrimp tickets (pot shrimp)/SE_pot_shrimp_CPUE')
 ```
@@ -13,13 +13,19 @@ knitr::opts_knit$set(root.dir = 'C:/Users/agreich/OneDrive - State of Alaska/Des
 
 Key points: 6/4/24:
 - QC my wrangle please, and give me clean data next time b/c wrangling takes forever
-- analysis by mgmt area -> predict the results by analysis area, average to mgmt unit, average mgmt units to get Region-wide cpue
+- how I dealt with missing data- last object moved forward
+- model: global and selected
+- analysis by mgmt area -> predict the results by analysis area (using the mode vessel to each area), average to mgmt unit, average mgmt units to get Region-wide cpue- using the mgmt unit level!!
 --more efficient than 67 or whatever models per analysis area.
 -model structure: global and selected model
 - from the wish list: what are you talking about? Examples please.
+-How will these results be used? -how will this cpue standardization be used
+- decision making level? at the distrist/mgmt u or analysis area
+-same page about me passing off this code, check in in ~5 years
+- survey dates?
 
 
-Anyway, let's get started. This document will look at management unit District 7 for pot (spot) shrimp standardization. It will load in the (pre-wrangled) data, wrangle further for district 1, and then some EDA (focusing on variables of interest and correlation). The analysis will be by district with an HGAM (hierarchical GAM) with the variables of interest as fixed effects and Analysis Area as a random effect. I will do model selection on a few versions of this HGAM. I will then make graphs of the standardized CPUE (by district and) and whatever else Max wants. THEN, I will run individual models by analysis areas, ideally with an automated function, and compare the graphs of those automated functions to the cpue of the ranef model.This will help me decide if models should be by MANAGEMENT UNIT (larger) or by ANALYSIS AREA (smaller). In hindsight, I should start with District 7, since I have explored the Upper Ernest sound data extensively.Ok, now the RMD is named accordingly 
+Anyway, let's get started. This document will look at management unit District 7 for pot (spot) shrimp standardization. It will load in the (pre-wrangled) data, wrangle further for district 1, and then some EDA (focusing on variables of interest and correlation). I will then make graphs of the standardized CPUE (by district and) and whatever else. THEN, I will run individual models by analysis areas, ideally with an automated function, and compare the graphs of those automated functions to the cpue of the ranef model.This will help me decide if models should be by MANAGEMENT UNIT (larger) or by ANALYSIS AREA (smaller). 
 
 
 Load libraries
@@ -72,14 +78,14 @@ ggplot(D7) + aes(x=log(CPUE_nom+0.001)) + geom_density()
 qqnorm(log(D7$CPUE_nom)) #that kind of looks bad. Maybe somehting other than log-trans?
 qqnorm(D7$CPUE_nom)
 
-ggplot(D7) + aes(x=CPUE_nom) + geom_density()+facet_wrap(~Analysis.Area)
+#ggplot(D7) + aes(x=CPUE_nom) + geom_density()+facet_wrap(~Analysis.Area)
 ggplot(D7) + aes(x=log(CPUE_nom+0.001)) + geom_density()+facet_wrap(~Analysis.Area)
 
 #cpue by year
-ggplot(D7) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_point() #ther is a big outlier
-ggplot(D7) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_boxplot(outliers = F)
+#ggplot(D7) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_point() #ther is a big outlier
+ggplot(D7) + aes(x=factor(Season.Ref), y=log(CPUE_nom)) + geom_boxplot(outliers = F)
 
-ggplot(D7) + aes(x=factor(Season.Ref), y=CPUE_nom) + geom_boxplot(outliers = F) + facet_wrap(~Analysis.Area) #cpue varies... cyclically with time. Is season a fixed effect? I want to estimate it, so probs not. its def not linear.
+ggplot(D7) + aes(x=factor(Season.Ref), y=log(CPUE_nom)) + geom_boxplot(outliers = F) +  facet_wrap(~Analysis.Area) #cpue varies... cyclically with time. Is season a fixed effect? I want to estimate it, so probs not. its def not linear.
 
 #catch by year
 ggplot(D7) + aes(x=factor(Season.Ref), y=total_weight) + geom_boxplot() #this is total weight per fish ticket.
@@ -103,11 +109,11 @@ ggplot(D7) + aes(x=factor(vessel_count_mgmt_u), y=log(CPUE_nom)) + geom_boxplot(
 
 
 #correlation plot
-library(corrplot)
-D7_interest_cor <- D7 %>% select(CPUE_nom, jdate, vessel_count_mgmt_u)
-cor_prep <- cor(D7_interest_cor)
-corrplot(cor_prep)
-?pairs
+#library(corrplot)
+#D7_interest_cor <- D7 %>% select(CPUE_nom, jdate, vessel_count_mgmt_u)
+#cor_prep <- cor(D7_interest_cor)
+#corrplot(cor_prep)
+#?pairs
 
 
 #check model residuals, see if we need ar1 correlation in the model
@@ -128,7 +134,7 @@ unique(D7$ADFG.Number)
 
 
 
-Model selection 5/15/24
+Model selection 5/15/24- non-imputed data
 ```{r}
 
 #ok can breifly test ranefs
@@ -166,10 +172,11 @@ summary(M3)
 
 
 
-Another imputation method: LOCF- last obervation carried forwards - might work well for cpue
+Imputation method: LOCF- last obervation carried forwards 
 ```{r}
-D7$logCPUE <- log(D7$CPUE_nom) #I do not need the +0.001 becayse everything is positive
-#lets try imputing data for area:year wihtout imputing for every single damn boat
+D7$logCPUE <- log(D7$CPUE_nom) #I do not need the +0.001 because everything is positive/ not 0
+
+
 temp2 <- expand.grid(Season.Ref = unique(D7$Season.Ref),
                      Analysis.Area = unique(D7$Analysis.Area)
 )
@@ -183,12 +190,12 @@ mode_boat <- which.max(table(D7$ADFG.Number))
 mode_val <- names(mode_boat)
   
 
-
 D7_sub3 <- D7_sub2 %>%
-  #mutate(ADFG.Number = ifelse(is.na(ADFG.Number), mode_val, ADFG.Number)) #replacing NA with the mode fishing vessel
-  mutate(ADFG.Number = replace_na(ADFG.Number, mode_val))
+  mutate(ADFG.Number = replace_na(ADFG.Number, mode_val)) #give the missing value the mode fishing vessel
+
 ############################################
-  #I asked the internet for some help and:
+#filling in the missing year value with the mean of the last year
+##############################################
   # Step 1: Calculate the mean logCPUE for each season
 season_means <- D7_sub3 %>%
   group_by(Season.Ref, Analysis.Area) %>%
@@ -259,42 +266,29 @@ M_alt2 <- lm(logCPUE~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, dat
 
 AIC(M3_2, M_alt1, M_alt2) #M3_2 wins
 
-
+plot(M3_2)
 
 ```
 
 
 
 
-Predict.
+Predict -global vessel mode - D7 only
 ```{r}
 table(D7$ADFG.Number)
 
 
-std_dat<- expand.grid(Season.Ref = unique(D7_filled_3$Season.Ref),
+std_dat<- expand.grid(Season.Ref = unique(D7_filled_3$Season.Ref), #predict with every boat as the mode for D7(52131)
                               Analysis.Area = unique(D7_filled_3$Analysis.Area), 
                               ADFG.Number = factor(52131) 
                       )
 
-pred_logcpue <- predict(M3_2, std_dat, type = "response", se = TRUE) #analysis areas are weighed
-#should I add weights to predict?? for area?
+pred_logcpue <- predict(M3_2, std_dat, type = "response", se = TRUE) 
 
-#cool, I have a predicted log cpue
 
 #get the unlogged cpue and put back in DF
 ln_mu = pred_logcpue$fit
 ln_sigma = pred_logcpue$se.fit
-
-
-#std_dat %>% 
- #  mutate(
-  #        log_cpue_pred=fit,
-   #       bt_cpue = exp(fit), 
-    #      bt_upper = exp(upper),
-     #     bt_lower = exp(lower),
-      #    bt_se = exp(se)
-         # bt_cv = bt_se/bt_cpue
-  # ) -> pred_dat
 
 std_dat %>% 
    mutate(
@@ -303,11 +297,8 @@ std_dat %>%
           sigma = sqrt((exp(ln_sigma^2) - 1) * exp(2*ln_mu + ln_sigma^2)), #make sure is right
           upper= mu + 2*sigma,
           lower = mu - 2*sigma
-   ) -> pred_dat_biascorrected
+   ) -> pred_dat_biascorrected #gives the predicted dataset for using the same mode boat for all areas
 
-
-
-##### bias corrected: do I use in every case?
 
 
 ```
@@ -334,7 +325,7 @@ See: https://stats.stackexchange.com/questions/115571/back-transforming-regressi
 
 
 
-Analysis and model testing: individual analysis areas
+Analysis and model testing: individual analysis areas- for D7 comparison only
 ```{r}
 #separate datasets (use the datasets where missing values already filled)
 Ernest_U <- D7 %>% filter(Analysis.Area == "Upper Ernest Sound")
@@ -401,7 +392,6 @@ comb_D7 <- rbind(EU_pred, Brad_pred, Zim_pred) #EL_pred is being finicky
 #oh wait. I can just take the coeffs per year... right? since there are no interactions
 #maybe not via the method I chose tho
 
-#plot
 
 ```
 
@@ -535,7 +525,7 @@ comb_D7 %>% filter(Analysis.Area =="Bradfield Canal") %>%
 
 ```
 
-Ok, based on these graphs I've decided area-wide analysis is fine, and I'd like to use the mode of each vessel for analysis. Now make the graphs for D7 and do the other stuff that Max wanted.
+Ok, based on these graphs I've decided area-wide analysis is fine, and I'd like to use the mode of each vessel for analysis. Now make the graphs for D7 and do the other stuff.
 
 
 
@@ -589,16 +579,11 @@ Zim_plot
 
 ```
 
-bootstrap aside.
-```{r}
-library(nptest)
-np.boot(x=)
-```
 
-D7 total graphs
-Read up on combining cpue's from area:
-Not sure if I should aggregate cpue's (sum) or take the average.
-Stuck here 6/3/24- I need to take the variance of the mean- either by delta method or bootstrapping.
+
+D7 district-wide graphs
+Average of analysis area cpue's, weighted by area
+Weighted and unweighted graphs
 ```{r}
 
 #D7 df's
@@ -696,22 +681,12 @@ D7_plot
 ```
 
 
-Aside:
-IS ADFG vessel accounted for?
--in email max says:
+
 
 This is where shrimp survey data is located.
 https://www.adfg.alaska.gov/analytics/saw.dll?Answers&path=%2Fshared%2FCommercial%20Fisheries%2FRegion%20I%2FInvertebrates%2FSurvey%2FShrimp%2FSpecimens%20with%20Pot%20Data
 
-Survey catches are also reported in fish ticket data, recorded as Fishery: Test Fish, and Permit Holder: ADFG Sitka. These survey catches should be removed from calculations in CPUE and total reportable harvest.- I DO NOT SEE THESE REPORTED THO
+Survey catches are also reported in fish ticket data, recorded as Fishery: Test Fish, and Permit Holder: ADFG Sitka. These survey catches should be removed from calculations in CPUE and total reportable harvest.- as of 6/5/24 not included in wrangle function from shrimp_functions.R- add it in.
 
 
-_______
-
-Take away from KAtie meeting:
-focus on shrimp ticket for now.
-Ask Max at what level does he make decisions. When he closes an area, what is that based off of?
-
-What do I do about the imputed data? How to report that?
-I can plot raw catch and effort, I dont need to standardize that right?
 
