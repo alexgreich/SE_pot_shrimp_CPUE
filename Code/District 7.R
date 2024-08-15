@@ -1,6 +1,7 @@
 ##D7 R code
 
-#alex REich 8/1/24
+#Alex Reich 8/1/24
+#shrimp CPUE standardization code for District 7
 
 
 #load libraries
@@ -9,7 +10,7 @@ library(ggplot2)
 library(cowplot)
 library(viridis)
 library(RColorBrewer)
-library(mgcv)
+#library(mgcv)
 
 
 #Load the data and select for D7
@@ -18,9 +19,14 @@ D7 <- wrangled_shrimp %>% filter(Management_unit == "District 7") %>%
   mutate(Analysis.Area = factor(Analysis.Area),
          ADFG.Number = factor(ADFG.Number),
          Season.Ref = factor(Season.Ref)
-  )#make things factors for the gams
+  )
 
 unique(D7$Analysis.Area)
+
+#load the old, undocumented analysis area weights
+##this will be updated eventually but not right now
+old_weights <- read.csv("Data/Analysis_Area weighting.csv")
+D7_weights <- old_weights %>% filter(Management.unit=="District 7")
 
 #############################################################
 #exploratory plots
@@ -55,8 +61,7 @@ ggplot(D7) + aes(x=factor(vessel_count_mgmt_u), y=log(CPUE_nom)) + geom_boxplot(
 
 
 #drop the outlier for now- a data entry error?
-D7 <- D7 %>% filter(ADFG.Number!= 99999)
-unique(D7$ADFG.Number)
+D7 <- D7 %>% filter(CPUE_nom < 100) 
 
 #Remove ADFG vessel from consideration (add this to shrimp prep function later)
 D7 <- D7 %>% filter(ADFG.Number!= 99999)
@@ -150,6 +155,8 @@ M_alt1 <- lm(logCPUE~ Season.Ref + ADFG.Number + Analysis.Area, data=D7_filled_3
 M_alt2 <- lm(logCPUE~ Season.Ref + Analysis.Area + Season.Ref:Analysis.Area, data=D7_filled_3) 
 
 AIC(M3_2, M_alt1, M_alt2) #M3_2 wins
+
+#checked out gamma dist in District 7_gamma.R. This one looks better
 
 #plot(M3_2)
 ################################################################################################################################
@@ -264,13 +271,12 @@ Zim_plot
 
 ###################################################################################
 
-#TAKE A LOOK AT BELOW ALEX!!
+
 #####################################################################################
 #D7 district-wide graphs
 #Average of analysis area cpue's, weighted by area
 #Weighted and unweighted graphs
-#D7 df's
-##combine values
+
 ##Looking at p 111 of campbell 2015
 D7_results_area_weighted <- D7_pred_comb %>%
   group_by(Season.Ref) %>% #I want the sum by year
@@ -283,7 +289,6 @@ D7_results_area_weighted <- D7_pred_comb %>%
 #mutate(index= CPUE_sum*area)
 
 
-#6/4/24
 ##get mean of sd
 D7_pred_comb$sigma #my standard deviations
 var_D7<-D7_pred_comb$sigma^2 #my variances
@@ -329,7 +334,7 @@ D7_no_weight <- ggplot(D7_results_not_weighted)  + aes(x=Season.Ref, y=CPUE_avg)
   # scale_y_continuous(breaks = c(1,2,3,4,5,6), expand=c(0,0))+
   ylim(0, 8)
 
-D7_plot <- D7_no_weight/raw_D7_plot
+D7_plot_no_weight <- D7_no_weight/raw_D7_plot
 
 #D7 graphs weighted by area
 D7_yes_weight <- ggplot(D7_results_area_weighted)  + aes(x=Season.Ref, y=CPUE_avg) + 
@@ -346,6 +351,39 @@ D7_yes_weight <- ggplot(D7_results_area_weighted)  + aes(x=Season.Ref, y=CPUE_av
 D7_results_area_weighted
 D7_results_not_weighted
 
-D7_plot
-(D7_plot_weight <- D7_yes_weight/raw_D7_plot)
+D7_plot_no_weight #not weighted
+(D7_plot_weight <- D7_yes_weight/raw_D7_plot) #weighted by area (sq mi)
 
+###################################################
+###########################################8/15/24
+#and now let's weigh by the old weights 
+D7_pred_comb <- right_join(D7_pred_comb, D7_weights)
+
+D7_results_area_weighted_the_old_way <- D7_pred_comb %>%
+  group_by(Season.Ref) %>% #I want the sum by year
+  summarise(CPUE_avg = weighted.mean(x=mu, w=Weight),
+            CPUE_sd = sqrt(weighted.mean(x=sigma^2, w=Weight))
+  )%>%
+  mutate(upper = CPUE_avg + 2*CPUE_sd,
+         lower = CPUE_avg - 2*CPUE_sd)
+
+##get mean of sd
+D7_pred_comb$sigma #my standard deviations
+var_D7<-D7_pred_comb$sigma^2 #my variances #NOTE THAT TYLER SAID THIS MIGHT BE WRONG!!
+sqrt(mean(var_D7))
+mean(D7_pred_comb$sigma) 
+
+#D7 plot weighted with old weights
+D7_yes_weight_oldway <- ggplot(D7_results_area_weighted_the_old_way)  + aes(x=Season.Ref, y=CPUE_avg) + 
+  geom_point(size=3)+
+  geom_errorbar( aes(ymin=lower, ymax=upper)) +
+  geom_line(aes(group=1))+ #that works+
+  #geom_hline(aes(yintercept=mean(std_dat_ranef_lim$bt_cpue)), linetype="dashed")+
+  theme_cowplot()+
+  labs(y="Standardized CPUE (lbs/pots)", x=NULL, title = "District 7" )+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  # scale_y_continuous(breaks = c(1,2,3,4,5,6), expand=c(0,0))+
+  ylim(0, 8)
+
+
+(D7_plot_weight_oldway <- D7_yes_weight_oldway/raw_D7_plot)
